@@ -297,6 +297,43 @@ body {
 }
 .posten:active { transform: translateY(2px); box-shadow: 0 3px 0 var(--orange-deep); }
 
+.install {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: max(168px, calc(env(safe-area-inset-bottom) + 158px));
+  z-index: 4;
+  background: #8d8b86;
+  border: 2px solid #3a3936;
+  box-shadow: 2px 3px 0 #2a2927, inset 0 1px 0 #c9c7c1;
+  padding: 10px 12px 12px;
+}
+.install[hidden] { display: none !important; }
+.install-copy {
+  margin: 0 0 8px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1f1e1c;
+}
+.install-bar {
+  display: flex;
+  gap: 8px;
+}
+.install-bar button {
+  font-family: var(--display);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 0;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+#install-skip { background: #333; color: #eee; flex: 1; }
+#install-go.shoot { background: var(--orange); color: #1a0c04; flex: 1.4; }
+
 .acts {
   display: grid;
   grid-template-columns: 1fr 1fr;

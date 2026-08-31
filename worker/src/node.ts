@@ -39,6 +39,11 @@ const app = new Hono();
 app.all("/api/*", (c) => api.fetch(c.req.raw, env));
 
 if (existsSync(join(process.cwd(), "dist", "index.html"))) {
+  app.get("/sw.js", async (c, next) => {
+    c.header("Service-Worker-Allowed", "/");
+    c.header("Cache-Control", "no-cache");
+    return serveStatic({ path: "./dist/sw.js" })(c, next);
+  });
   app.use("/*", serveStatic({ root: "./dist" }));
   app.get("*", serveStatic({ path: "./dist/index.html" }));
 }

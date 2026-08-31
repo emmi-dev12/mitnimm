@@ -34,6 +34,13 @@ app.innerHTML = `
     </div>
     <button class="posten" id="posten" type="button">POSTEN</button>
   </div>
+  <div class="install" id="install" hidden>
+    <p class="install-copy" id="install-copy"></p>
+    <div class="install-bar">
+      <button type="button" id="install-skip">NICHT JETZT</button>
+      <button type="button" class="shoot" id="install-go">HOMESCREEN</button>
+    </div>
+  </div>
   <div class="gonebox" id="gonebox">
     <p class="hint">Was ist weg?</p>
     <div id="goneitems"></div>
@@ -94,6 +101,10 @@ function readKm(): number {
 let lang = readLang();
 let km = readKm();
 const t = () => I18N[lang];
+const iosHome = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const standalone =
+  window.matchMedia("(display-mode: standalone)").matches ||
+  Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
 
 function catLabel(c: { de: string; en: string; fr: string; it: string }) {
   return c[lang];
@@ -521,6 +532,10 @@ function applyChrome() {
   document.querySelector(".kinds")!.setAttribute("aria-label", c.mapType);
   document.getElementById("langs")!.setAttribute("aria-label", c.langAria);
   document.getElementById("kms")!.setAttribute("aria-label", c.kmAria);
+  document.getElementById("install-copy")!.textContent = iosHome ? c.installIos : c.installHint;
+  document.getElementById("install-go")!.textContent = iosHome ? c.installIos : c.installGo;
+  document.getElementById("install-skip")!.textContent = c.installSkip;
+  document.getElementById("install-go")!.hidden = iosHome;
   paintPrefs();
   paintCats();
   if (selected && liveSpots().some((x) => x.id === selected!.id)) renderPlate(selected);
@@ -546,3 +561,35 @@ document.getElementById("kms")!.addEventListener("click", (e) => {
 });
 
 applyChrome();
+
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  void navigator.serviceWorker.register("/sw.js");
+}
+
+type InstallPrompt = Event & { prompt: () => Promise<void> };
+let deferredInstall: InstallPrompt | null = null;
+
+function showInstall() {
+  if (standalone || localStorage.getItem("mitnimm.installSkip")) return;
+  if (!iosHome && !deferredInstall) return;
+  document.getElementById("install")!.hidden = false;
+}
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstall = e as InstallPrompt;
+  showInstall();
+});
+
+if (iosHome) showInstall();
+
+document.getElementById("install-skip")!.addEventListener("click", () => {
+  localStorage.setItem("mitnimm.installSkip", "1");
+  document.getElementById("install")!.hidden = true;
+});
+document.getElementById("install-go")!.addEventListener("click", async () => {
+  if (!deferredInstall) return;
+  await deferredInstall.prompt();
+  deferredInstall = null;
+  document.getElementById("install")!.hidden = true;
+});

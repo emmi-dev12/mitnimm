@@ -53,6 +53,10 @@ export const I18N = {
     mapType: "Kartentyp",
     langAria: "Sprache",
     kmAria: "Umkreis",
+    installHint: "Wie eine App. Ohne Store.",
+    installGo: "HOMESCREEN",
+    installIos: "Teilen, dann «Zum Home-Bildschirm».",
+    installSkip: "NICHT JETZT",
   },
   en: {
     map: "Map",
@@ -87,6 +91,10 @@ export const I18N = {
     mapType: "Map type",
     langAria: "Language",
     kmAria: "Radius",
+    installHint: "Like an app. No store.",
+    installGo: "HOME SCREEN",
+    installIos: "Share, then Add to Home Screen.",
+    installSkip: "NOT NOW",
   },
   fr: {
     map: "Carte",
@@ -121,6 +129,10 @@ export const I18N = {
     mapType: "Type de carte",
     langAria: "Langue",
     kmAria: "Rayon",
+    installHint: "Comme une app. Pas de store.",
+    installGo: "ÉCRAN D’ACCUEIL",
+    installIos: "Partager, puis « Sur l’écran d’accueil ».",
+    installSkip: "PAS MAINTENANT",
   },
   it: {
     map: "Mappa",
@@ -155,6 +167,10 @@ export const I18N = {
     mapType: "Tipo di mappa",
     langAria: "Lingua",
     kmAria: "Raggio",
+    installHint: "Come un’app. Niente store.",
+    installGo: "HOME",
+    installIos: "Condividi, poi « Aggiungi a Home ».",
+    installSkip: "NON ORA",
   },
 } as const;
 
