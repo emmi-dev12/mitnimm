@@ -1,0 +1,9 @@
+{
+  "name": "mitnimm",
+  "short_name": "mitnimm",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#eceae4",
+  "theme_color": "#e85c1a",
+  "lang": "de-CH"
+}

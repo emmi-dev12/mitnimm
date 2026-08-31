@@ -1,0 +1,56 @@
+export type Cat = { id: string; de: string; en: string; subs?: Cat[] };
+
+export const CATS: Cat[] = [
+  {
+    id: "moebel",
+    de: "Möbel",
+    en: "Furniture",
+    subs: [
+      { id: "sofa", de: "Sofa", en: "Sofa" },
+      { id: "tisch", de: "Tisch", en: "Table" },
+      { id: "stuhl", de: "Stuhl", en: "Chair" },
+      { id: "bett", de: "Bett", en: "Bed" },
+      { id: "schrank", de: "Schrank", en: "Cabinet" },
+      { id: "regal", de: "Regal", en: "Shelf" },
+      { id: "anderes-m", de: "Anderes", en: "Other" },
+    ],
+  },
+  {
+    id: "haushalt",
+    de: "Haushalt",
+    en: "Household",
+    subs: [
+      { id: "lampe", de: "Lampe", en: "Lamp" },
+      { id: "teppich", de: "Teppich", en: "Rug" },
+      { id: "deko", de: "Deko", en: "Decor" },
+      { id: "anderes-h", de: "Anderes", en: "Other" },
+    ],
+  },
+  {
+    id: "kueche",
+    de: "Küche",
+    en: "Kitchen",
+    subs: [
+      { id: "geraet", de: "Gerät", en: "Appliance" },
+      { id: "geschirr", de: "Geschirr", en: "Dishes" },
+      { id: "anderes-k", de: "Anderes", en: "Other" },
+    ],
+  },
+  { id: "garten", de: "Garten", en: "Garden" },
+  { id: "kind", de: "Kind", en: "Kids" },
+  { id: "mode", de: "Mode", en: "Clothes" },
+  { id: "schuhe", de: "Schuhe", en: "Shoes" },
+  { id: "sport", de: "Sport", en: "Sport" },
+  { id: "velo", de: "Velo", en: "Bike" },
+  { id: "buecher", de: "Bücher", en: "Books" },
+  { id: "medien", de: "Medien", en: "Media" },
+  { id: "elektronik", de: "Elektronik", en: "Electronics" },
+  { id: "handy", de: "Handy", en: "Phone" },
+  { id: "computer", de: "Computer", en: "Computer" },
+  { id: "musik", de: "Musik", en: "Music" },
+  { id: "spiele", de: "Spiele", en: "Toys" },
+  { id: "tiere", de: "Tiere", en: "Pets" },
+  { id: "werkstatt", de: "Werkstatt", en: "Tools" },
+  { id: "buero", de: "Büro", en: "Office" },
+  { id: "anderes", de: "Anderes", en: "Other" },
+];

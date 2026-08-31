@@ -1,0 +1,15 @@
+name = "mitnimm-api"
+main = "worker/src/index.ts"
+compatibility_date = "2026-04-01"
+
+[vars]
+APP_URL = "http://localhost:5173"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mitnimm"
+database_id = "00000000-0000-0000-0000-000000000001"
+
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "mitnimm-photos"

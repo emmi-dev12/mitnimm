@@ -1,0 +1,6 @@
+{
+  "prompt": "Portrait 9:16 mobile PWA screenshot, designed UI not a poster. App mitnimm. Category-standard map layout: GPS-centered Swiss city street map filling ~75% of the screen, PLZ search stencil plate top-right \"8004\". Free-stuff listings are PHOTO THUMBNAILS placed directly on their map coordinates — rectangular industrial crate labels: pile photo on top, bold caps in straight quotes below (\"SOFA\", \"BÜCHER\", \"LAMPE\"), orange nylon zip-tie clipped on live piles. The selected listing is larger with a 45-degree yellow-black hazard stripe under it. Bottom 20%: stencil inventory for the selected pile only (category, items, metres, hours left). Post action is a hanging orange zip-tie tab labeled POSTEN. No teardrop pins, no hamburger, no blue FAB, no Airbnb bottom sheet, no profile avatar. High-fidelity phone UI, sharp, no watermark.",
+  "approved": true,
+  "id": "crate-labels",
+  "world": "zip-tie stockroom + category-standard map job + photos on coordinates"
+}
