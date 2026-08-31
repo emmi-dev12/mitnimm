@@ -47,7 +47,7 @@ Swiss sidewalk giveaway culture. Phone in hand, outdoors, often one-handed, vari
 
 Confirmed v1:
 
-- PWA, CH only, EN + DE.
+- PWA, CH only, EN + DE + FR + IT.
 - No accounts; browse open; post without login.
 - Create: on-site GPS (~50–100m) + live camera; 1 photo required.
 - After photo: top-level category + optional subcategory + optional short description (low friction). Categories as rich as Ricardo/Tutti goods (not services/jobs/real estate).
@@ -65,7 +65,6 @@ Confirmed v1:
 Undecided / not v1:
 
 - Native iOS/Android.
-- FR/IT.
 - Phone push (Telegram instead).
 - Paid domain.
 - Exact sidewalk-snap algorithm (street/sidewalk nearby; findable; not a house pin).

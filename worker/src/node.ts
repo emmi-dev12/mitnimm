@@ -6,6 +6,7 @@ import { Hono } from "hono";
 import api from "./index.ts";
 import { diskPhotos } from "./photos.ts";
 import { openDb } from "./sqlite.ts";
+import { registerBotCommands } from "./telegram.ts";
 
 function loadDevVars() {
   const p = join(process.cwd(), ".dev.vars");
@@ -31,6 +32,8 @@ const env = {
   TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID,
   APP_URL: process.env.APP_URL || process.env.RENDER_EXTERNAL_URL,
 };
+
+void registerBotCommands(env);
 
 const app = new Hono();
 app.all("/api/*", (c) => api.fetch(c.req.raw, env));

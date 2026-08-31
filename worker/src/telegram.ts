@@ -1,3 +1,5 @@
+import { TG, type Lang } from "./copy";
+
 type TgEnv = {
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_CHAT_ID?: string;
@@ -30,4 +32,22 @@ export async function notifyNew(
     disable_web_page_preview: true,
     text: `mitnimm — ${spot.quote}\n${spot.category}: ${spot.items}\n${link}`,
   });
+}
+
+const LANGS: Lang[] = ["de", "en", "fr", "it"];
+
+export async function registerBotCommands(env: TgEnv) {
+  if (!env.TELEGRAM_BOT_TOKEN) return;
+  const cmds = (lang: Lang) => [
+    { command: "start", description: TG[lang].cmdStart },
+    { command: "lang", description: TG[lang].cmdLang },
+    { command: "km", description: TG[lang].cmdKm },
+  ];
+  await tg(env, "setMyCommands", { commands: cmds("en") });
+  for (const lang of LANGS) {
+    await tg(env, "setMyCommands", {
+      commands: cmds(lang),
+      language_code: lang,
+    });
+  }
 }

@@ -5,6 +5,7 @@ import { ZH, haversineM, inCH, hoursLeft, TTL_H, type Spot } from "./data";
 import { styleFor, type MapKind } from "./styles";
 import { CATS } from "./categories";
 import { loadSpots, createSpot, stillSpot, goneSpot, itemList, mediaUrl } from "./store";
+import { detectLang, I18N, isLang, KMS, LANGS, type Lang } from "./i18n";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
@@ -14,8 +15,12 @@ app.innerHTML = `
   </div>
   <form class="search-plate" id="plz-form">
     <input id="plz" inputmode="numeric" maxlength="4" placeholder="PLZ" aria-label="PLZ" />
-    <button type="submit" aria-label="Suchen">⌕</button>
+    <button type="submit" id="plz-go" aria-label="Suchen">⌕</button>
   </form>
+  <div class="prefs">
+    <div class="pref-row" id="langs" role="radiogroup" aria-label="Sprache"></div>
+    <div class="pref-row" id="kms" role="radiogroup" aria-label="Umkreis"></div>
+  </div>
   <div class="kinds" role="radiogroup" aria-label="Kartentyp">
     <button type="button" class="kind on" data-kind="map">Karte</button>
     <button type="button" class="kind" data-kind="satellite">Satellit</button>
@@ -76,17 +81,36 @@ let allSpots: Spot[] = [];
 let selected: Spot | null = null;
 const markers = new Map<string, maplibregl.Marker>();
 
+function readLang(): Lang {
+  const saved = localStorage.getItem("mitnimm.lang");
+  if (saved && isLang(saved)) return saved;
+  return detectLang(navigator.language);
+}
+function readKm(): number {
+  const n = Number(localStorage.getItem("mitnimm.km"));
+  return (KMS as readonly number[]).includes(n) ? n : 3;
+}
+
+let lang = readLang();
+let km = readKm();
+const t = () => I18N[lang];
+
+function catLabel(c: { de: string; en: string; fr: string; it: string }) {
+  return c[lang];
+}
+
 function metres(s: Spot) {
   return Math.round(haversineM(here, s));
 }
 
 function renderPlate(s: Spot) {
   const m = metres(s);
+  const c = t();
   document.getElementById("plate")!.innerHTML = `
-    <div class="cell"><div class="k">CATEGORY</div><div class="v">${s.category}</div></div>
-    <div class="cell"><div class="k">ITEMS</div><div class="v">${s.items}</div></div>
-    <div class="cell"><div class="k">METRES</div><div class="v">${m} M</div></div>
-    <div class="cell"><div class="k">HOURS LEFT</div><div class="v">${String(hoursLeft(s)).padStart(2, "0")} H</div></div>
+    <div class="cell"><div class="k">${c.cat}</div><div class="v">${lang === "en" ? s.categoryEn : s.category}</div></div>
+    <div class="cell"><div class="k">${c.items}</div><div class="v">${lang === "en" ? s.itemsEn : s.items}</div></div>
+    <div class="cell"><div class="k">${c.metres}</div><div class="v">${m} M</div></div>
+    <div class="cell"><div class="k">${c.hours}</div><div class="v">${String(hoursLeft(s)).padStart(2, "0")} H</div></div>
   `;
 }
 
@@ -98,7 +122,7 @@ function crateEl(s: Spot) {
     <span class="tie"></span>
     <div class="frame">
       <img src="${mediaUrl(s.photo)}" alt="${s.quote}" />
-      <div class="quote">“${s.quote}”</div>
+      <div class="quote">“${lang === "en" ? s.quoteEn : s.quote}”</div>
       <div class="hazard"></div>
     </div>
   `;
@@ -110,17 +134,14 @@ function crateEl(s: Spot) {
 }
 
 function mountMarkers() {
-  const live = new Set(
-    allSpots.filter((s) => !s.gone && hoursLeft(s) > 0).map((s) => s.id),
-  );
+  const live = new Set(liveSpots().map((s) => s.id));
   for (const [id, m] of markers) {
     if (!live.has(id)) {
       m.remove();
       markers.delete(id);
     }
   }
-  for (const s of allSpots) {
-    if (s.gone || hoursLeft(s) <= 0) continue;
+  for (const s of liveSpots()) {
     markers.get(s.id)?.remove();
     const m = new maplibregl.Marker({ element: crateEl(s), anchor: "bottom" })
       .setLngLat([s.lon, s.lat])
@@ -130,7 +151,9 @@ function mountMarkers() {
 }
 
 function liveSpots() {
-  return allSpots.filter((s) => !s.gone && hoursLeft(s) > 0);
+  return allSpots.filter(
+    (s) => !s.gone && hoursLeft(s) > 0 && metres(s) <= km * 1000,
+  );
 }
 
 function selectLive(s?: Spot | null) {
@@ -139,7 +162,7 @@ function selectLive(s?: Spot | null) {
   if (!next) {
     selected = null;
     document.getElementById("plate")!.innerHTML =
-      `<div class="cell"><div class="k">MAP</div><div class="v">NICHTS DA</div></div>`;
+      `<div class="cell"><div class="k">MAP</div><div class="v">${t().empty}</div></div>`;
     mountMarkers();
     return;
   }
@@ -160,7 +183,7 @@ async function markGone(s: Spot, remaining?: string[]) {
     }
     select(next);
   } catch {
-    alert("API down.");
+    alert(t().apiDown);
   }
 }
 
@@ -172,7 +195,7 @@ async function stillThere(s: Spot) {
     selected = next;
     renderPlate(next);
   } catch {
-    alert("API down.");
+    alert(t().apiDown);
   }
 }
 
@@ -210,7 +233,7 @@ map.on("load", async () => {
   try {
     allSpots = await loadSpots();
   } catch {
-    alert("API nicht da. Ein Terminal: npm run dev (web + api).");
+    alert(t().apiDown);
   }
   mountMarkers();
   selectLive();
@@ -247,7 +270,10 @@ document.getElementById("plz-form")!.addEventListener("submit", async (e) => {
   if (!hit) return;
   const lat = hit.lat as number;
   const lon = hit.lon as number;
+  here = { lat, lon };
+  you.setLngLat([lon, lat]);
   map.easeTo({ center: [lon, lat], zoom: 15, duration: 700 });
+  selectLive(selected);
 });
 
 const sheet = document.getElementById("sheet")!;
@@ -303,7 +329,7 @@ function gps(): Promise<{ lat: number; lon: number }> {
 function paintCats() {
   catsEl.innerHTML = CATS.map(
     (c) =>
-      `<button type="button" class="chip${c.id === catId ? " on" : ""}" data-cat="${c.id}">${c.de}</button>`,
+      `<button type="button" class="chip${c.id === catId ? " on" : ""}" data-cat="${c.id}">${catLabel(c)}</button>`,
   ).join("");
   const cat = CATS.find((c) => c.id === catId);
   if (!cat?.subs?.length) {
@@ -314,7 +340,7 @@ function paintCats() {
   subsEl.innerHTML = cat.subs
     .map(
       (s) =>
-        `<button type="button" class="chip${s.id === subId ? " on" : ""}" data-sub="${s.id}">${s.de}</button>`,
+        `<button type="button" class="chip${s.id === subId ? " on" : ""}" data-sub="${s.id}">${catLabel(s)}</button>`,
     )
     .join("");
 }
@@ -346,9 +372,9 @@ document.getElementById("posten")!.addEventListener("click", async () => {
     sheet.classList.add("open");
   } catch (err) {
     const e = err as Error;
-    if (e.message === "ch") alert("Nur in der Schweiz.");
-    else if (e.message === "gps") alert("Standort braucht GPS. Du musst beim Haufen sein.");
-    else alert("Kamera braucht HTTPS + Erlaubnis. Nur Live-Foto, kein Album.");
+    if (e.message === "ch") alert(t().onlyCh);
+    else if (e.message === "gps") alert(t().needGps);
+    else alert(t().needCam);
   }
 });
 
@@ -377,17 +403,17 @@ document.getElementById("shoot")!.addEventListener("click", () => {
 meta.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!photo || !catId) {
-    alert("Foto + Kategorie.");
+    alert(t().needMeta);
     return;
   }
   const noHouse = (document.getElementById("no-house") as HTMLInputElement).checked;
   if (!noHouse) {
-    alert("Nur Haufen fotografieren, kein Haus.");
+    alert(t().needPile);
     return;
   }
   const cat = CATS.find((c) => c.id === catId)!;
   const sub = cat.subs?.find((s) => s.id === subId);
-  const label = (sub ?? cat).de;
+  const label = catLabel(sub ?? cat);
   const note = (document.getElementById("note") as HTMLInputElement).value.trim();
   try {
     const blob = await (await fetch(photo)).blob();
@@ -408,7 +434,7 @@ meta.addEventListener("submit", async (e) => {
     closeSheet();
     select(spot);
   } catch {
-    alert("Speichern fehlgeschlagen. Läuft die API?");
+    alert(t().saveFail);
   }
 });
 
@@ -456,3 +482,67 @@ document.getElementById("gone-some")!.addEventListener("click", () => {
     items.filter((_, i) => !goneIdx.has(i)),
   );
 });
+
+function paintPrefs() {
+  const langs = document.getElementById("langs")!;
+  const kms = document.getElementById("kms")!;
+  langs.innerHTML = LANGS.map(
+    (l) =>
+      `<button type="button" class="pref${l === lang ? " on" : ""}" data-lang="${l}">${l.toUpperCase()}</button>`,
+  ).join("");
+  kms.innerHTML = KMS.map(
+    (n) =>
+      `<button type="button" class="pref${n === km ? " on" : ""}" data-km="${n}">${n}km</button>`,
+  ).join("");
+}
+
+function applyChrome() {
+  const c = t();
+  document.documentElement.lang = lang;
+  document.querySelector<HTMLButtonElement>("[data-kind=map]")!.textContent = c.map;
+  document.querySelector<HTMLButtonElement>("[data-kind=satellite]")!.textContent = c.sat;
+  document.querySelector<HTMLButtonElement>("[data-kind=hybrid]")!.textContent = c.hyb;
+  document.getElementById("still")!.textContent = c.still;
+  document.getElementById("weg")!.textContent = c.gone;
+  document.getElementById("posten")!.textContent = c.posten;
+  document.querySelector(".gonebox .hint")!.textContent = c.goneHint;
+  document.getElementById("gone-cancel")!.textContent = c.cancel;
+  document.getElementById("gone-all")!.textContent = c.goneAll;
+  document.getElementById("gone-some")!.textContent = c.ok;
+  document.querySelector(".camhint")!.textContent = c.camHint;
+  document.querySelector(".meta .hint")!.textContent = c.metaHint;
+  document.querySelector(".nophoto-house")!.lastChild!.textContent = " " + c.noHouse;
+  (document.getElementById("note") as HTMLInputElement).placeholder = c.note;
+  document.getElementById("pin")!.textContent = c.pin;
+  document.getElementById("shoot")!.textContent = c.shoot;
+  document.getElementById("abort")!.textContent = c.cancel;
+  document.getElementById("cancel")!.textContent = c.cancel;
+  document.getElementById("plz-go")!.setAttribute("aria-label", c.search);
+  document.querySelector(".kinds")!.setAttribute("aria-label", c.mapType);
+  document.getElementById("langs")!.setAttribute("aria-label", c.langAria);
+  document.getElementById("kms")!.setAttribute("aria-label", c.kmAria);
+  paintPrefs();
+  paintCats();
+  if (selected && liveSpots().some((x) => x.id === selected!.id)) renderPlate(selected);
+  else selectLive();
+}
+
+document.getElementById("langs")!.addEventListener("click", (e) => {
+  const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-lang]");
+  if (!b || !isLang(b.dataset.lang!)) return;
+  lang = b.dataset.lang as Lang;
+  localStorage.setItem("mitnimm.lang", lang);
+  applyChrome();
+});
+document.getElementById("kms")!.addEventListener("click", (e) => {
+  const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-km]");
+  if (!b) return;
+  const n = Number(b.dataset.km);
+  if (!(KMS as readonly number[]).includes(n)) return;
+  km = n;
+  localStorage.setItem("mitnimm.km", String(km));
+  paintPrefs();
+  selectLive(selected);
+});
+
+applyChrome();

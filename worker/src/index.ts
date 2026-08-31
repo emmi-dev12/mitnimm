@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { appUrl, notifyNew, tg } from "./telegram";
+import { detectLang, isLang, KMS, TG, type Lang } from "./copy";
 
 type Stmt = {
   bind: (...args: unknown[]) => Stmt;
@@ -48,12 +49,42 @@ const CH = { minLat: 45.8, maxLat: 47.9, minLon: 5.9, maxLon: 10.6 };
 const app = new Hono<{ Bindings: Env }>();
 app.use("/api/*", cors({ origin: "*" }));
 
-async function migrate(db: D1Database) {
+async function migrate(db: Env["DB"]) {
   await db
     .prepare(
       `CREATE TABLE IF NOT EXISTS spots (id TEXT PRIMARY KEY, lat REAL NOT NULL, lon REAL NOT NULL, quote TEXT NOT NULL, quote_en TEXT NOT NULL, category TEXT NOT NULL, category_en TEXT NOT NULL, items TEXT NOT NULL, items_en TEXT NOT NULL, photo_key TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL, gone INTEGER NOT NULL DEFAULT 0)`,
     )
     .run();
+  await db
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS prefs (chat_id TEXT PRIMARY KEY, lang TEXT NOT NULL DEFAULT 'de', km INTEGER NOT NULL DEFAULT 3)`,
+    )
+    .run();
+}
+
+type Pref = { lang: Lang; km: number };
+
+async function getPref(env: Env, chatId: number, hint?: string | null): Promise<Pref> {
+  await migrate(env.DB);
+  const row = await env.DB.prepare("SELECT lang, km FROM prefs WHERE chat_id = ?")
+    .bind(String(chatId))
+    .first<{ lang: string; km: number }>();
+  if (row && isLang(row.lang)) {
+    const km = Number(row.km);
+    return { lang: row.lang, km: KMS.includes(km as never) ? km : 3 };
+  }
+  return { lang: detectLang(hint), km: 3 };
+}
+
+async function setPref(env: Env, chatId: number, patch: Partial<Pref>) {
+  const cur = await getPref(env, chatId);
+  const next = { ...cur, ...patch };
+  await env.DB.prepare(
+    "INSERT INTO prefs (chat_id, lang, km) VALUES (?, ?, ?) ON CONFLICT(chat_id) DO UPDATE SET lang = excluded.lang, km = excluded.km",
+  )
+    .bind(String(chatId), next.lang, next.km)
+    .run();
+  return next;
 }
 
 async function expire(env: Env) {
@@ -274,31 +305,111 @@ app.get("/api/nearby", async (c) => {
 
 app.post("/api/telegram", async (c) => {
   const update = (await c.req.json()) as {
-    message?: { chat: { id: number }; text?: string };
+    message?: { chat: { id: number }; text?: string; from?: { language_code?: string } };
+    callback_query?: {
+      id: string;
+      data?: string;
+      from?: { language_code?: string };
+      message?: { chat: { id: number }; message_id: number };
+    };
   };
+
+  const cb = update.callback_query;
+  if (cb?.message) {
+    const chatId = cb.message.chat.id;
+    let pref = await getPref(c.env, chatId, cb.from?.language_code);
+    const data = cb.data || "";
+    if (data.startsWith("lang:") && isLang(data.slice(5))) {
+      pref = await setPref(c.env, chatId, { lang: data.slice(5) as Lang });
+      await tg(c.env, "answerCallbackQuery", { callback_query_id: cb.id });
+      await tg(c.env, "editMessageText", {
+        chat_id: chatId,
+        message_id: cb.message.message_id,
+        text: TG[pref.lang].langSet,
+      });
+      return c.json({ ok: true });
+    }
+    if (data.startsWith("km:")) {
+      const km = Number(data.slice(3));
+      if (KMS.includes(km as never)) pref = await setPref(c.env, chatId, { km });
+      await tg(c.env, "answerCallbackQuery", { callback_query_id: cb.id });
+      await tg(c.env, "editMessageText", {
+        chat_id: chatId,
+        message_id: cb.message.message_id,
+        text: TG[pref.lang].kmSet(pref.km),
+      });
+      return c.json({ ok: true });
+    }
+    await tg(c.env, "answerCallbackQuery", { callback_query_id: cb.id });
+    return c.json({ ok: true });
+  }
+
   const msg = update.message;
-  const text = msg?.text?.trim() ?? "";
+  const raw = msg?.text?.trim() ?? "";
   if (!msg) return c.json({ ok: true });
   const chatId = msg.chat.id;
-  if (text === "/start") {
+  const pref = await getPref(c.env, chatId, msg.from?.language_code);
+  const t = TG[pref.lang];
+  const text = raw.replace(/@\w+/, "").trim();
+  const [head, arg] = text.split(/\s+/, 2);
+  const cmd = head.toLowerCase();
+
+  const langKb = {
+    inline_keyboard: [
+      [
+        { text: "DE", callback_data: "lang:de" },
+        { text: "EN", callback_data: "lang:en" },
+        { text: "FR", callback_data: "lang:fr" },
+        { text: "IT", callback_data: "lang:it" },
+      ],
+    ],
+  };
+  const kmKb = {
+    inline_keyboard: [
+      KMS.map((km) => ({ text: `${km}km`, callback_data: `km:${km}` })),
+    ],
+  };
+
+  if (cmd === "/start") {
+    await tg(c.env, "sendMessage", { chat_id: chatId, text: t.start });
+    return c.json({ ok: true });
+  }
+  if (cmd === "/lang" || cmd === "/language") {
+    if (arg && isLang(arg.toLowerCase())) {
+      const next = await setPref(c.env, chatId, { lang: arg.toLowerCase() as Lang });
+      await tg(c.env, "sendMessage", { chat_id: chatId, text: TG[next.lang].langSet });
+      return c.json({ ok: true });
+    }
     await tg(c.env, "sendMessage", {
       chat_id: chatId,
-      text: "PLZ schicken, z.B. 8004. Ich schick dir die nächsten Haufen.",
+      text: t.pickLang,
+      reply_markup: langKb,
+    });
+    return c.json({ ok: true });
+  }
+  if (cmd === "/km" || cmd === "/distance") {
+    const km = Number(arg);
+    if (arg && KMS.includes(km as never)) {
+      const next = await setPref(c.env, chatId, { km });
+      await tg(c.env, "sendMessage", { chat_id: chatId, text: TG[next.lang].kmSet(next.km) });
+      return c.json({ ok: true });
+    }
+    await tg(c.env, "sendMessage", {
+      chat_id: chatId,
+      text: t.pickKm,
+      reply_markup: kmKb,
     });
     return c.json({ ok: true });
   }
   if (!/^\d{4}$/.test(text)) {
-    await tg(c.env, "sendMessage", {
-      chat_id: chatId,
-      text: "Vierstellige PLZ, sonst find ich nichts.",
-    });
+    await tg(c.env, "sendMessage", { chat_id: chatId, text: t.badPlz });
     return c.json({ ok: true });
   }
   await migrate(c.env.DB);
   await expire(c.env);
   const origin = await geocodePlz(text);
   if (!origin) {
-    await tg(c.env, "sendMessage", { chat_id: chatId, text: "PLZ unbekannt." });
+    await tg(c.env, "sendMessage", { chat_id: chatId, text: t.unknownPlz });
     return c.json({ ok: true });
   }
   const live = await c.env.DB.prepare(
@@ -306,13 +417,13 @@ app.post("/api/telegram", async (c) => {
   ).all<Row>();
   const hits = (live.results ?? [])
     .map((r) => ({ ...jsonSpot(r), metres: Math.round(metres(origin, r)) }))
-    .filter((s) => s.metres <= 3000)
+    .filter((s) => s.metres <= pref.km * 1000)
     .sort((a, b) => a.metres - b.metres)
     .slice(0, 8);
   if (!hits.length) {
     await tg(c.env, "sendMessage", {
       chat_id: chatId,
-      text: `Nichts in 3km um ${text}.`,
+      text: t.none(text, pref.km),
     });
     return c.json({ ok: true });
   }
@@ -324,7 +435,7 @@ app.post("/api/telegram", async (c) => {
   await tg(c.env, "sendMessage", {
     chat_id: chatId,
     disable_web_page_preview: true,
-    text: `${text} — ${hits.length} Haufen:\n\n${lines.join("\n")}`,
+    text: `${t.header(text, hits.length, pref.km)}\n\n${lines.join("\n")}`,
   });
   return c.json({ ok: true });
 });
