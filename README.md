@@ -1,32 +1,82 @@
+<div align="center">
+
+<img src="docs/mark.svg" width="96" height="96" alt="mitnimm" />
+
 # mitnimm
 
-Switzerland-only map of sidewalk giveaways (gratis mitnehmen).
+**Gratis zum Mitnehmen — a Switzerland-only map of sidewalk piles.**
 
-Site is meant to run as one Node service on Render: Vite static files + `/api`.
+You photograph what’s on the street. Someone walking by takes it. The pin dies in days.
 
-## Local
+[![Live](https://img.shields.io/badge/live-mitnimm.onrender.com-e85c1a?style=flat-square)](https://mitnimm.onrender.com)
+[![Telegram](https://img.shields.io/badge/bot-@mitnimmbot-26A5E4?style=flat-square)](https://t.me/mitnimmbot)
+[![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)](LICENSE)
 
-```
+</div>
+
+<p align="center">
+  <img src="docs/hero.png" width="380" alt="mitnimm map: listing photos zip-tied onto coordinates, metal plate, POSTEN tab" />
+</p>
+
+Not Tutti. Not Facebook Marketplace. Not a teardrop pin.
+
+Piles show as **photos sitting on the coordinates**, dressed like crate labels. Orange zip-tie = still there. Hazard stripe = the one you picked.
+
+## How it works
+
+1. **Find** — map or a 4-digit PLZ. Tap a photo, walk over.
+2. **Post** — you are at the pile. GPS + **live camera only**. Category, optional note, done.
+3. **Gone** — mark items or the whole pile. **Still there** resets the 72h clock.
+
+After it’s gone, history keeps street + categories + dates. Photos drop.
+
+## Hard rules
+
+- Switzerland bounding box. No accounts.
+- Live camera, on site. Camera roll is rejected.
+- Pile only — no house, no façade, no house number.
+- OpenStreetMap / OpenFreeMap attribution stays on. geo.admin.ch is PLZ search only.
+- Telegram bot is public: `/start`, then a PLZ.
+
+Product spec: [`PRODUCT.md`](PRODUCT.md).
+
+## Stack
+
+| Layer | Tech |
+|---|---|
+| Map UI | Vite + TypeScript, MapLibre, OpenFreeMap. No React. |
+| API | Node (Hono) + SQLite + disk photos |
+| Host | Render, one free web service |
+| Alerts | Telegram `@mitnimmbot` |
+
+## Run it
+
+```bash
 npm install
 npm run dev
 ```
 
-Web: http://localhost:5173 — API: http://127.0.0.1:8787
+http://localhost:5173 proxies `/api` to http://127.0.0.1:8787
 
-GPS on-site + live camera to post. No house / façade / house number in the photo.
+Copy `.env.example`. Bot token lives in `.dev.vars` (gitignored). Never commit it.
 
-## Render
+```
+TELEGRAM_BOT_TOKEN=
+APP_URL=http://localhost:5173
+```
 
-1. New Web Service from this repo (or Blueprint `render.yaml`).
-2. Free plan. Build `npm ci && npm run build`. Start `npx tsx worker/src/node.ts`.
-3. Env: `TELEGRAM_BOT_TOKEN` (from BotFather). `APP_URL` = the `*.onrender.com` URL.
-4. Telegram webhook: `https://api.telegram.org/bot<token>/setWebhook?url=https://<service>.onrender.com/api/telegram`
+## Deploy
 
-Free Render sleeps after 15 minutes idle. First request can take ~1 minute. Piles on the free disk vanish if the instance is replaced.
+`render.yaml` is the Blueprint. Free instance. Build `npm ci && npm run build`, start `npx tsx worker/src/node.ts`.
 
-## Product rules
+Free Render sleeps after 15 minutes idle — first hit can take about a minute. Disk is ephemeral; piles vanish if the instance is replaced.
 
-- CH bounding box only, no accounts
-- OpenStreetMap / OpenFreeMap attribution stays on
-- geo.admin.ch is PLZ search only
-- Telegram bot @mitnimmbot is public (`/start` + PLZ)
+Webhook:
+
+```
+https://api.telegram.org/bot<token>/setWebhook?url=https://<service>.onrender.com/api/telegram
+```
+
+## License
+
+[MIT](LICENSE)

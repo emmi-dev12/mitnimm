@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="mitnimm">
+  <rect width="512" height="512" fill="#eceae4"/>
+  <text x="36" y="292" fill="#141414" font-family="Arial Narrow, Helvetica Neue, sans-serif" font-size="108" font-weight="800" letter-spacing="-2">mitnimm</text>
+  <g fill="#e85c1a">
+    <rect x="40" y="318" width="52" height="14"/>
+    <rect x="108" y="318" width="52" height="14"/>
+    <rect x="176" y="318" width="52" height="14"/>
+    <rect x="244" y="318" width="52" height="14"/>
+    <rect x="312" y="318" width="52" height="14"/>
+  </g>
+</svg>
