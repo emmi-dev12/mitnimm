@@ -8,7 +8,7 @@
 
 Du fotografierst, was auf der Strasse steht. Jemand nimmt’s mit. Der Pin stirbt in Tagen.
 
-**DE** · [EN](README.en.md)
+**DE** · [EN](README.en.md) · [FR](README.fr.md) · [IT](README.it.md) · [RM](README.rm.md)
 
 [![Live](https://img.shields.io/badge/live-mitnimm.onrender.com-e85c1a?style=flat-square)](https://mitnimm.onrender.com)
 [![Telegram](https://img.shields.io/badge/bot-@mitnimmbot-26A5E4?style=flat-square)](https://t.me/mitnimmbot)

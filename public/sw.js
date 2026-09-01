@@ -1,4 +1,4 @@
-const CACHE = "mitnimm-shell-v5";
+const CACHE = "mitnimm-shell-v6";
 const SHELL = ["/", "/manifest.webmanifest", "/icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {

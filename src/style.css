@@ -133,6 +133,18 @@ button, input { -webkit-tap-highlight-color: transparent; }
   display: flex;
   flex-direction: column;
   gap: 4px;
+  align-items: flex-end;
+}
+.lang-pick {
+  background: #f4f2ec;
+  color: #222;
+  border: 2px solid #2f2e2c;
+  box-shadow: 2px 3px 0 #1c1c1a;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  padding: 6px 8px;
 }
 .pref-row {
   display: flex;

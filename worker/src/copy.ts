@@ -1,4 +1,4 @@
-export const LANGS = ["de", "en", "fr", "it"] as const;
+export const LANGS = ["de", "en", "fr", "it", "rm"] as const;
 export type Lang = (typeof LANGS)[number];
 export const KMS = [1, 3, 5, 10, 15] as const;
 
@@ -11,6 +11,7 @@ export function detectLang(raw?: string | null): Lang {
   if (s.startsWith("fr")) return "fr";
   if (s.startsWith("it")) return "it";
   if (s.startsWith("en")) return "en";
+  if (s.startsWith("rm") || s.startsWith("roh") || s.includes("rumant")) return "rm";
   return "de";
 }
 
@@ -26,7 +27,7 @@ export const TG = {
     langSet: "Sprache: Deutsch",
     kmSet: (km: number) => `Umkreis: ${km}km`,
     cmdStart: "Los — dann eine PLZ",
-    cmdLang: "Sprache: DE EN FR IT",
+    cmdLang: "Sprache: DE EN FR IT RM",
     cmdKm: "Umkreis: 1 3 5 10 15 km",
   },
   en: {
@@ -40,7 +41,7 @@ export const TG = {
     langSet: "Language: English",
     kmSet: (km: number) => `Radius: ${km}km`,
     cmdStart: "Start — then a PLZ",
-    cmdLang: "Language: DE EN FR IT",
+    cmdLang: "Language: DE EN FR IT RM",
     cmdKm: "Radius: 1 3 5 10 15 km",
   },
   fr: {
@@ -54,7 +55,7 @@ export const TG = {
     langSet: "Langue : français",
     kmSet: (km: number) => `Rayon : ${km}km`,
     cmdStart: "Start — puis un NPA",
-    cmdLang: "Langue : DE EN FR IT",
+    cmdLang: "Langue : DE EN FR IT RM",
     cmdKm: "Rayon : 1 3 5 10 15 km",
   },
   it: {
@@ -68,7 +69,21 @@ export const TG = {
     langSet: "Lingua: italiano",
     kmSet: (km: number) => `Raggio: ${km}km`,
     cmdStart: "Start — poi un NPA",
-    cmdLang: "Lingua: DE EN FR IT",
+    cmdLang: "Lingua: DE EN FR IT RM",
     cmdKm: "Raggio: 1 3 5 10 15 km",
+  },
+  rm: {
+    start: "Trametta in NPA, p.ex. 8004. /lang e /km per preferenzas.",
+    badPlz: "NPA da 4 cifras, schigliò chat jau nagut.",
+    unknownPlz: "NPA nunenconuschent.",
+    none: (plz: string, km: number) => `Nagut entaifer ${km}km da ${plz}.`,
+    header: (plz: string, n: number, km: number) => `${plz} — ${n} mucs, ${km}km:`,
+    pickLang: "Lingua:",
+    pickKm: "Radius:",
+    langSet: "Lingua: rumantsch",
+    kmSet: (km: number) => `Radius: ${km}km`,
+    cmdStart: "Start — lura in NPA",
+    cmdLang: "Lingua: DE EN FR IT RM",
+    cmdKm: "Radius: 1 3 5 10 15 km",
   },
 } as const;

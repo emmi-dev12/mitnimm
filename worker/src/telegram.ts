@@ -34,7 +34,7 @@ export async function notifyNew(
   });
 }
 
-const LANGS: Lang[] = ["de", "en", "fr", "it"];
+const LANGS: Lang[] = ["de", "en", "fr", "it", "rm"];
 
 export async function registerBotCommands(env: TgEnv) {
   if (!env.TELEGRAM_BOT_TOKEN) return;

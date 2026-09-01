@@ -20,7 +20,7 @@ app.innerHTML = `
     <button type="submit" id="plz-go" aria-label="Suchen">⌕</button>
   </form>
   <div class="prefs">
-    <div class="pref-row" id="langs" role="radiogroup" aria-label="Sprache"></div>
+    <select id="lang-pick" class="lang-pick" aria-label="Sprache"></select>
     <div class="pref-row" id="kms" role="radiogroup" aria-label="Umkreis"></div>
   </div>
   <div class="dock">
@@ -120,7 +120,7 @@ const standalone =
   window.matchMedia("(display-mode: standalone)").matches ||
   Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
 
-function catLabel(c: { de: string; en: string; fr: string; it: string }) {
+function catLabel(c: { de: string; en: string; fr: string; it: string; rm: string }) {
   return c[lang];
 }
 
@@ -201,7 +201,7 @@ function spotMatchesCat(s: Spot) {
   if (!catFilter) return true;
   const cat = CATS.find((c) => c.id === catFilter);
   if (!cat) return true;
-  const keys = [cat.de, cat.en, cat.fr, cat.it, ...(cat.subs ?? []).flatMap((x) => [x.de, x.en, x.fr, x.it])];
+  const keys = [cat.de, cat.en, cat.fr, cat.it, cat.rm, ...(cat.subs ?? []).flatMap((x) => [x.de, x.en, x.fr, x.it, x.rm])];
   const blob = `${s.category} ${s.categoryEn} ${s.quote} ${s.quoteEn} ${s.items} ${s.itemsEn}`.toLowerCase();
   return keys.some((k) => blob.includes(k.toLowerCase()));
 }
@@ -678,11 +678,10 @@ document.getElementById("gone-some")!.addEventListener("click", () => {
 });
 
 function paintPrefs() {
-  const langs = document.getElementById("langs")!;
   const kms = document.getElementById("kms")!;
-  langs.innerHTML = LANGS.map(
-    (l) =>
-      `<button type="button" class="pref${l === lang ? " on" : ""}" data-lang="${l}">${l.toUpperCase()}</button>`,
+  const pick = document.getElementById("lang-pick") as HTMLSelectElement;
+  pick.innerHTML = LANGS.map(
+    (l) => `<option value="${l}"${l === lang ? " selected" : ""}>${l.toUpperCase()}</option>`,
   ).join("");
   kms.innerHTML = KMS.map(
     (n) =>
@@ -731,7 +730,7 @@ function applyChrome() {
   document.getElementById("plz-go")!.setAttribute("aria-label", c.search);
   document.getElementById("cat-filter")!.setAttribute("aria-label", c.cat);
   document.querySelector(".kinds")!.setAttribute("aria-label", c.mapType);
-  document.getElementById("langs")!.setAttribute("aria-label", c.langAria);
+  document.getElementById("lang-pick")!.setAttribute("aria-label", c.langAria);
   document.getElementById("kms")!.setAttribute("aria-label", c.kmAria);
   document.getElementById("install-copy")!.textContent = iosHome ? c.installIos : c.installHint;
   document.getElementById("install-go")!.textContent = iosHome ? c.installIos : c.installGo;
@@ -744,10 +743,10 @@ function applyChrome() {
   else selectLive();
 }
 
-document.getElementById("langs")!.addEventListener("click", (e) => {
-  const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-lang]");
-  if (!b || !isLang(b.dataset.lang!)) return;
-  lang = b.dataset.lang as Lang;
+document.getElementById("lang-pick")!.addEventListener("change", (e) => {
+  const v = (e.target as HTMLSelectElement).value;
+  if (!isLang(v)) return;
+  lang = v;
   localStorage.setItem("mitnimm.lang", lang);
   applyChrome();
 });

@@ -200,10 +200,11 @@ function catKeys(raw: string) {
       c.de.toLowerCase() === q ||
       c.en.toLowerCase() === q ||
       c.fr.toLowerCase() === q ||
-      c.it.toLowerCase() === q,
+      c.it.toLowerCase() === q ||
+      c.rm.toLowerCase() === q,
   );
   if (!cat) return [q];
-  return [cat.id, cat.de, cat.en, cat.fr, cat.it, ...(cat.subs ?? []).flatMap((s) => [s.id, s.de, s.en, s.fr, s.it])].map(
+  return [cat.id, cat.de, cat.en, cat.fr, cat.it, cat.rm, ...(cat.subs ?? []).flatMap((s) => [s.id, s.de, s.en, s.fr, s.it, s.rm])].map(
     (x) => x.toLowerCase(),
   );
 }
@@ -225,7 +226,7 @@ function matchSpot(
 app.get("/api/agent", (c) => c.json(agentCard));
 app.get("/api/openapi.json", (c) => c.json(openapi));
 app.get("/api/categories", (c) =>
-  c.json(CATS.map((x) => ({ id: x.id, de: x.de, en: x.en, fr: x.fr, it: x.it }))),
+  c.json(CATS.map((x) => ({ id: x.id, de: x.de, en: x.en, fr: x.fr, it: x.it, rm: x.rm }))),
 );
 
 app.get("/api/spots", async (c) => {
@@ -458,7 +459,10 @@ app.post("/api/telegram", async (c) => {
         { text: "DE", callback_data: "lang:de" },
         { text: "EN", callback_data: "lang:en" },
         { text: "FR", callback_data: "lang:fr" },
+      ],
+      [
         { text: "IT", callback_data: "lang:it" },
+        { text: "RM", callback_data: "lang:rm" },
       ],
     ],
   };

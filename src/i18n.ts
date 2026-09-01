@@ -1,4 +1,4 @@
-export const LANGS = ["de", "en", "fr", "it"] as const;
+export const LANGS = ["de", "en", "fr", "it", "rm"] as const;
 export type Lang = (typeof LANGS)[number];
 export const KMS = [1, 3, 5, 10, 15] as const;
 export type Km = (typeof KMS)[number];
@@ -16,6 +16,7 @@ export function detectLang(raw?: string | null): Lang {
   if (s.startsWith("fr")) return "fr";
   if (s.startsWith("it")) return "it";
   if (s.startsWith("en")) return "en";
+  if (s.startsWith("rm") || s.startsWith("roh") || s.includes("rumant")) return "rm";
   return "de";
 }
 
@@ -191,6 +192,49 @@ export const I18N = {
     installGo: "HOME",
     installIos: "Condividi, poi « Aggiungi a Home ».",
     installSkip: "NON ORA",
+  },
+  rm: {
+    map: "Carta",
+    sat: "Satellit",
+    hyb: "Hibrid",
+    still: "ANC QUA",
+    gone: "IVA",
+    posten: "POSTEN",
+    goneHint: "Tge è iva?",
+    cancel: "INTERRUMPER",
+    goneAll: "TUT IVA",
+    ok: "OK",
+    camHint: "Mo il muc. Nagina chasa, nagina fatschada, nagin numer.",
+    metaHint: "Categoria, lura detagl opziunal. Foto = muc, betg chasa.",
+    noHouse: "La foto mussa il muc, betg la chasa.",
+    note: "Tge exactamain? (opziunal)",
+    pin: "METTER PIN",
+    shoot: "FAR LA FOTO",
+    cat: "CATEGORIA",
+    items: "CHAUSSAS",
+    metres: "METERS",
+    hours: "URAS",
+    empty: "NAGUT QUA",
+    was: "ERA QUA",
+    apiDown: "API betg qua.",
+    onlyCh: "Mo en Svizra.",
+    needGps: "GPS obligatoric. Ti stos esser tar il muc.",
+    needCam: "Camera: HTTPS + permissiun — u album cun GPS.",
+    needMeta: "Foto + categoria.",
+    needPile: "Fotografescha il muc, betg la chasa.",
+    needExif: "La foto da l’album sto avair GPS en las metadatas.",
+    album: "ALBUM",
+    crop: "TAGLIAR",
+    saveFail: "Memorisar fallì. Va l’API?",
+    allCats: "TUTTAS",
+    search: "Tschertgar",
+    mapType: "Tip da carta",
+    langAria: "Lingua",
+    kmAria: "Radius",
+    installHint: "Sco ina app. Nagin store.",
+    installGo: "HOME",
+    installIos: "Cundivider, lura «Agiuntar a Home».",
+    installSkip: "BETG USS",
   },
 } as const;
 
