@@ -4,9 +4,11 @@
 
 # mitnimm
 
-**Gratis zum Mitnehmen — a Switzerland-only map of sidewalk piles.**
+**Gratis zum Mitnehmen — Schweiz-Karte für Haufen auf dem Trottoir.**
 
-You photograph what’s on the street. Someone walking by takes it. The pin dies in days.
+Du fotografierst, was auf der Strasse steht. Jemand nimmt’s mit. Der Pin stirbt in Tagen.
+
+**DE** · [EN](README.en.md)
 
 [![Live](https://img.shields.io/badge/live-mitnimm.onrender.com-e85c1a?style=flat-square)](https://mitnimm.onrender.com)
 [![Telegram](https://img.shields.io/badge/bot-@mitnimmbot-26A5E4?style=flat-square)](https://t.me/mitnimmbot)
@@ -15,30 +17,30 @@ You photograph what’s on the street. Someone walking by takes it. The pin dies
 </div>
 
 <p align="center">
-  <img src="docs/hero.png" width="380" alt="mitnimm map: listing photos zip-tied onto coordinates, metal plate, POSTEN tab" />
+  <img src="docs/hero.png" width="380" alt="mitnimm Karte: Fotos auf den Koordinaten, Metallschild, POSTEN" />
 </p>
 
-Not Tutti. Not Facebook Marketplace. Not a teardrop pin.
+Nicht Tutti. Nicht Facebook Marketplace. Kein Tropfen-Pin.
 
-Piles show as **photos sitting on the coordinates**, dressed like crate labels. Orange zip-tie = still there. Hazard stripe = the one you picked.
+Haufen sind **Fotos auf den Koordinaten**, wie Kistentiketten. Orange Kabelbinder = noch da. Hazard-Streifen = der, den du gewählt hast.
 
-## How it works
+## So geht’s
 
-1. **Find** — map, 4-digit PLZ, or the **category dropdown** (ALLE / Möbel / …). Tap a photo, walk over.
-2. **Post** — at the pile: GPS + live camera, or album JPEG **with GPS in the file**. Crop the pile (no house). Category, optional note.
-3. **Gone** — mark items or the whole pile. **Still there** resets the 72h clock.
+1. **Finden** — Karte, vierstellige PLZ oder **Kategorie-Dropdown** (ALLE / Möbel / …). Foto tippen, hinlaufen.
+2. **Posten** — am Haufen: GPS + Live-Kamera, oder Album-JPEG **mit GPS in den Metadaten**. Zuschneiden (kein Haus). Kategorie, optional eine Notiz.
+3. **Weg** — Teile oder den ganzen Haufen markieren. **Noch da** setzt die 72h-Uhr zurück.
 
-After it’s gone, history keeps street + category + date. Photos drop.
+Danach bleibt die History: Strasse + Kategorie + Datum. Fotos fallen weg.
 
-## Agent API
+## Agent-API
 
-No auth. Base: https://mitnimm.onrender.com
+Kein Login. Basis: https://mitnimm.onrender.com
 
 | | |
 |---|---|
 | Discovery | [`/api/agent`](https://mitnimm.onrender.com/api/agent) |
 | OpenAPI | [`/api/openapi.json`](https://mitnimm.onrender.com/api/openapi.json) |
-| For models | [`/llms.txt`](https://mitnimm.onrender.com/llms.txt) |
+| Für Modelle | [`/llms.txt`](https://mitnimm.onrender.com/llms.txt) |
 
 ```
 GET /api/categories
@@ -47,42 +49,42 @@ GET /api/nearby?plz=8004&km=3&category=velo
 GET /api/history?category=
 ```
 
-`category` is an id (`moebel`) or a DE/EN/FR/IT label. `q` is free text on quote, items, street.
+`category` ist eine id (`moebel`) oder ein DE/EN/FR/IT-Label. `q` ist Freitext über Titel, Dinge, Strasse.
 
-**POST /api/spots** is for humans on site (GPS + photo). Do not automate posts.
+**POST /api/spots** ist für Menschen vor Ort (GPS + Foto). Keine automatischen Posts.
 
-Telegram: `/start`, `/lang`, `/km`, or a PLZ.
+Telegram: `/start`, `/lang`, `/km`, oder eine PLZ.
 
-## Hard rules
+## Harte Regeln
 
-- Switzerland bounding box. No accounts.
-- Live camera on site, or album JPEG with GPS metadata (anti-bot). Camera roll without GPS is rejected.
-- Pile only — no house, no façade, no house number. Crop before pin.
-- OpenStreetMap / OpenFreeMap attribution stays on. geo.admin.ch is PLZ search only.
-- Telegram bot is public: `/start`, `/lang`, `/km`, then a PLZ.
-- Agents may **read** the JSON API. They may not auto-post piles.
+- Nur Schweiz. Keine Accounts.
+- Live-Kamera vor Ort, oder Album-JPEG mit GPS (gegen Bots). Album ohne GPS fliegt raus.
+- Nur der Haufen — kein Haus, keine Fassade, keine Hausnummer. Vor dem Pin zuschneiden.
+- OpenStreetMap / OpenFreeMap-Attribution bleibt. geo.admin.ch nur für PLZ.
+- Telegram-Bot ist öffentlich: `/start`, `/lang`, `/km`, dann PLZ.
+- Agenten dürfen die JSON-API **lesen**. Sie dürfen keine Haufen auto-posten.
 
-Product spec: [`PRODUCT.md`](PRODUCT.md).
+Produktspec: [`PRODUCT.md`](PRODUCT.md). English: [`README.en.md`](README.en.md).
 
 ## Stack
 
-| Layer | Tech |
+| Schicht | Technik |
 |---|---|
-| Map UI | Vite + TypeScript, MapLibre, OpenFreeMap. No React. |
-| API | Node (Hono) + SQLite + disk photos |
-| Host | Render, one free web service |
+| Karte | Vite + TypeScript, MapLibre, OpenFreeMap. Kein React. |
+| API | Node (Hono) + SQLite + Fotos auf Disk |
+| Host | Render, ein Free-Webservice |
 | Alerts | Telegram `@mitnimmbot` |
 
-## Run it
+## Lokal
 
 ```bash
 npm install
 npm run dev
 ```
 
-http://localhost:5173 proxies `/api` to http://127.0.0.1:8787
+http://localhost:5173 proxyt `/api` auf http://127.0.0.1:8787
 
-Copy `.env.example`. Bot token lives in `.dev.vars` (gitignored). Never commit it.
+`.env.example` kopieren. Bot-Token liegt in `.dev.vars` (gitignored). Nie committen.
 
 ```
 TELEGRAM_BOT_TOKEN=
@@ -91,9 +93,9 @@ APP_URL=http://localhost:5173
 
 ## Deploy
 
-`render.yaml` is the Blueprint. Free instance. Build `npm ci && npm run build`, start `npx tsx worker/src/node.ts`.
+`render.yaml` ist der Blueprint. Free Instance. Build `npm ci && npm run build`, Start `npx tsx worker/src/node.ts`.
 
-Free Render sleeps after 15 minutes idle — first hit can take about a minute. Disk is ephemeral; piles vanish if the instance is replaced.
+Free Render schläft nach 15 Minuten Idle — der erste Hit dauert oft eine Minute. Disk ist ephemer; Haufen sind weg, wenn die Instanz neu kommt.
 
 Webhook:
 
@@ -101,6 +103,6 @@ Webhook:
 https://api.telegram.org/bot<token>/setWebhook?url=https://<service>.onrender.com/api/telegram
 ```
 
-## License
+## Lizenz
 
 [MIT](LICENSE)
