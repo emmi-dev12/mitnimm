@@ -1,3 +1,14 @@
 {
-  "framework": "vite"
+  "framework": "vite",
+  "nodeVersion": "22.x",
+  "functions": {
+    "api/index.ts": {
+      "runtime": "nodejs22.x",
+      "maxDuration": 30,
+      "includeFiles": "worker/src/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" }
+  ]
 }

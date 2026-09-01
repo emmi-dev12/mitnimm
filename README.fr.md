@@ -10,7 +10,7 @@ Tu photographies ce qui est dans la rue. Quelqu’un le prend. L’épingle meur
 
 [DE](README.md) · [EN](README.en.md) · **FR** · [IT](README.it.md) · [RM](README.rm.md)
 
-[![Live](https://img.shields.io/badge/live-mitnimm.onrender.com-e85c1a?style=flat-square)](https://mitnimm.onrender.com)
+[![Live](https://img.shields.io/badge/live-mitnimm.vercel.app-e85c1a?style=flat-square)](https://mitnimm.vercel.app)
 [![Telegram](https://img.shields.io/badge/bot-@mitnimmbot-26A5E4?style=flat-square)](https://t.me/mitnimmbot)
 [![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)](LICENSE)
 
@@ -34,13 +34,13 @@ Ensuite l’historique garde rue + catégorie + date. Les photos tombent.
 
 ## API agent
 
-Pas d’auth. Base : https://mitnimm.onrender.com
+Pas d’auth. Base : https://mitnimm.vercel.app
 
 | | |
 |---|---|
-| Discovery | [`/api/agent`](https://mitnimm.onrender.com/api/agent) |
-| OpenAPI | [`/api/openapi.json`](https://mitnimm.onrender.com/api/openapi.json) |
-| Pour les modèles | [`/llms.txt`](https://mitnimm.onrender.com/llms.txt) |
+| Discovery | [`/api/agent`](https://mitnimm.vercel.app/api/agent) |
+| OpenAPI | [`/api/openapi.json`](https://mitnimm.vercel.app/api/openapi.json) |
+| Pour les modèles | [`/llms.txt`](https://mitnimm.vercel.app/llms.txt) |
 
 ```
 GET /api/categories
@@ -72,7 +72,7 @@ Spec produit : [`PRODUCT.md`](PRODUCT.md). Défaut (allemand) : [`README.md`](RE
 |---|---|
 | Carte | Vite + TypeScript, MapLibre, OpenFreeMap. Pas de React. |
 | API | Node (Hono) + SQLite + photos sur disque |
-| Host | Render, un service web gratuit |
+| Host | Vercel (mitnimm.vercel.app) |
 | Alertes | Telegram `@mitnimmbot` |
 
 ## En local
@@ -100,7 +100,7 @@ Le free Render dort après 15 minutes d’inactivité — le premier hit peut pr
 Webhook :
 
 ```
-https://api.telegram.org/bot<token>/setWebhook?url=https://<service>.onrender.com/api/telegram
+https://api.telegram.org/bot<token>/setWebhook?url=https://mitnimm.vercel.app/api/telegram
 ```
 
 ## Licence

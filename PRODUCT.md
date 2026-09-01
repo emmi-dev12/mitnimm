@@ -41,7 +41,7 @@ Mechanism neighbors cannot copy without becoming this:
 
 ## Operating Context
 
-Swiss sidewalk giveaway culture. Phone in hand, outdoors, often one-handed, variable signal. PWA: camera + geolocation + installable. OpenStreetMap for map/geocoding (not osm.org public tiles for production traffic). Telegram: public bot (`/start`, PLZ, `/lang`, `/km`). GitHub (emmi-dev12), FOSS, $0 infra (Render web service). Languages v1: DE + EN + FR + IT. Agents consume the public JSON API; they do not post.
+Swiss sidewalk giveaway culture. Phone in hand, outdoors, often one-handed, variable signal. PWA: camera + geolocation + installable. OpenStreetMap for map/geocoding (not osm.org public tiles for production traffic). Telegram: public bot (`/start`, PLZ, `/lang`, `/km`). GitHub (emmi-dev12), FOSS, $0 infra (Vercel). Languages v1: DE + EN + FR + IT. Agents consume the public JSON API; they do not post.
 
 ## Capabilities and Constraints
 

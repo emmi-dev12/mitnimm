@@ -10,7 +10,7 @@ Fotografi quello che sta in strada. Qualcuno lo prende. Il pin muore in pochi gi
 
 [DE](README.md) · [EN](README.en.md) · [FR](README.fr.md) · **IT** · [RM](README.rm.md)
 
-[![Live](https://img.shields.io/badge/live-mitnimm.onrender.com-e85c1a?style=flat-square)](https://mitnimm.onrender.com)
+[![Live](https://img.shields.io/badge/live-mitnimm.vercel.app-e85c1a?style=flat-square)](https://mitnimm.vercel.app)
 [![Telegram](https://img.shields.io/badge/bot-@mitnimmbot-26A5E4?style=flat-square)](https://t.me/mitnimmbot)
 [![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)](LICENSE)
 
@@ -34,13 +34,13 @@ Poi la history tiene via + categoria + data. Le foto spariscono.
 
 ## API agent
 
-Nessuna auth. Base: https://mitnimm.onrender.com
+Nessuna auth. Base: https://mitnimm.vercel.app
 
 | | |
 |---|---|
-| Discovery | [`/api/agent`](https://mitnimm.onrender.com/api/agent) |
-| OpenAPI | [`/api/openapi.json`](https://mitnimm.onrender.com/api/openapi.json) |
-| Per i modelli | [`/llms.txt`](https://mitnimm.onrender.com/llms.txt) |
+| Discovery | [`/api/agent`](https://mitnimm.vercel.app/api/agent) |
+| OpenAPI | [`/api/openapi.json`](https://mitnimm.vercel.app/api/openapi.json) |
+| Per i modelli | [`/llms.txt`](https://mitnimm.vercel.app/llms.txt) |
 
 ```
 GET /api/categories
@@ -72,7 +72,7 @@ Spec prodotto: [`PRODUCT.md`](PRODUCT.md). Default (tedesco): [`README.md`](READ
 |---|---|
 | Mappa | Vite + TypeScript, MapLibre, OpenFreeMap. Niente React. |
 | API | Node (Hono) + SQLite + foto su disco |
-| Host | Render, un web service free |
+| Host | Vercel (mitnimm.vercel.app) |
 | Alert | Telegram `@mitnimmbot` |
 
 ## In locale
@@ -100,7 +100,7 @@ Il free Render dorme dopo 15 minuti di idle — il primo hit può richiedere un 
 Webhook:
 
 ```
-https://api.telegram.org/bot<token>/setWebhook?url=https://<service>.onrender.com/api/telegram
+https://api.telegram.org/bot<token>/setWebhook?url=https://mitnimm.vercel.app/api/telegram
 ```
 
 ## Licenza

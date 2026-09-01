@@ -10,7 +10,7 @@ Ti fotografeschas quai ch’è sin la via. Insatgi al prenda cun sai. Il pin mor
 
 [DE](README.md) · [EN](README.en.md) · [FR](README.fr.md) · [IT](README.it.md) · **RM**
 
-[![Live](https://img.shields.io/badge/live-mitnimm.onrender.com-e85c1a?style=flat-square)](https://mitnimm.onrender.com)
+[![Live](https://img.shields.io/badge/live-mitnimm.vercel.app-e85c1a?style=flat-square)](https://mitnimm.vercel.app)
 [![Telegram](https://img.shields.io/badge/bot-@mitnimmbot-26A5E4?style=flat-square)](https://t.me/mitnimmbot)
 [![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)](LICENSE)
 
@@ -34,13 +34,13 @@ Suenter resta la cronologia: via + categoria + data. Las fotos crodan davent.
 
 ## API d’agent
 
-Nagina auth. Basa: https://mitnimm.onrender.com
+Nagina auth. Basa: https://mitnimm.vercel.app
 
 | | |
 |---|---|
-| Discovery | [`/api/agent`](https://mitnimm.onrender.com/api/agent) |
-| OpenAPI | [`/api/openapi.json`](https://mitnimm.onrender.com/api/openapi.json) |
-| Per models | [`/llms.txt`](https://mitnimm.onrender.com/llms.txt) |
+| Discovery | [`/api/agent`](https://mitnimm.vercel.app/api/agent) |
+| OpenAPI | [`/api/openapi.json`](https://mitnimm.vercel.app/api/openapi.json) |
+| Per models | [`/llms.txt`](https://mitnimm.vercel.app/llms.txt) |
 
 ```
 GET /api/categories
@@ -72,7 +72,7 @@ Spec dal product: [`PRODUCT.md`](PRODUCT.md). Standard (tudestg): [`README.md`](
 |---|---|
 | Carta | Vite + TypeScript, MapLibre, OpenFreeMap. Nagin React. |
 | API | Node (Hono) + SQLite + fotos sin disc |
-| Host | Render, in web service gratuit |
+| Host | Vercel (mitnimm.vercel.app) |
 | Alarms | Telegram `@mitnimmbot` |
 
 ## Local
@@ -100,7 +100,7 @@ Il Render gratuit durmenta suenter 15 minutas senza traffic — l’emprim hit p
 Webhook:
 
 ```
-https://api.telegram.org/bot<token>/setWebhook?url=https://<service>.onrender.com/api/telegram
+https://api.telegram.org/bot<token>/setWebhook?url=https://mitnimm.vercel.app/api/telegram
 ```
 
 ## Licenza

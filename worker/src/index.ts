@@ -154,7 +154,7 @@ async function reverseStreet(lat: number, lon: number) {
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
     const json = (await fetch(url, {
-      headers: { "user-agent": "mitnimm/0.1 (https://mitnimm.onrender.com)" },
+      headers: { "user-agent": "mitnimm/0.1 (https://mitnimm.vercel.app)" },
     }).then((r) => r.json())) as {
       address?: { road?: string; postcode?: string; suburb?: string; village?: string; town?: string; city?: string };
     };

@@ -2,7 +2,7 @@
 
 Free sidewalk piles in Switzerland. No auth. Do not POST.
 
-Start: https://mitnimm.onrender.com/api
+Start: https://mitnimm.vercel.app/api
 
 ```
 GET /api/nearby?plz=8004
@@ -11,5 +11,5 @@ GET /api/categories
 GET /api/history
 ```
 
-Website: https://mitnimm.onrender.com
+Website: https://mitnimm.vercel.app
 Bot: https://t.me/mitnimmbot

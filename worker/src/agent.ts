@@ -1,4 +1,4 @@
-const BASE = "https://mitnimm.onrender.com";
+const BASE = "https://mitnimm.vercel.app";
 
 export const agentCard = {
   name: "mitnimm",

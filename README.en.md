@@ -10,7 +10,7 @@ You photograph what’s on the street. Someone walking by takes it. The pin dies
 
 [**DE**](README.md) · **EN** · [FR](README.fr.md) · [IT](README.it.md) · [RM](README.rm.md)
 
-[![Live](https://img.shields.io/badge/live-mitnimm.onrender.com-e85c1a?style=flat-square)](https://mitnimm.onrender.com)
+[![Live](https://img.shields.io/badge/live-mitnimm.vercel.app-e85c1a?style=flat-square)](https://mitnimm.vercel.app)
 [![Telegram](https://img.shields.io/badge/bot-@mitnimmbot-26A5E4?style=flat-square)](https://t.me/mitnimmbot)
 [![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)](LICENSE)
 
@@ -34,13 +34,13 @@ After it’s gone, history keeps street + category + date. Photos drop.
 
 ## Agent API
 
-No auth. Base: https://mitnimm.onrender.com
+No auth. Base: https://mitnimm.vercel.app
 
 | | |
 |---|---|
-| Discovery | [`/api/agent`](https://mitnimm.onrender.com/api/agent) |
-| OpenAPI | [`/api/openapi.json`](https://mitnimm.onrender.com/api/openapi.json) |
-| For models | [`/llms.txt`](https://mitnimm.onrender.com/llms.txt) |
+| Discovery | [`/api/agent`](https://mitnimm.vercel.app/api/agent) |
+| OpenAPI | [`/api/openapi.json`](https://mitnimm.vercel.app/api/openapi.json) |
+| For models | [`/llms.txt`](https://mitnimm.vercel.app/llms.txt) |
 
 ```
 GET /api/categories
@@ -73,8 +73,8 @@ Product spec: [`PRODUCT.md`](PRODUCT.md). German (default): [`README.md`](README
 | Layer | Tech |
 |---|---|
 | Map UI | Vite + TypeScript, MapLibre, OpenFreeMap. No React. |
-| API | Node (Hono) + SQLite + disk photos |
-| Host | Render, one free web service |
+| API | Node (Hono) + SQLite, photos in Vercel Blob |
+| Host | Vercel (mitnimm.vercel.app) |
 | Alerts | Telegram `@mitnimmbot` |
 
 ## Run it
@@ -95,14 +95,12 @@ APP_URL=http://localhost:5173
 
 ## Deploy
 
-`render.yaml` is the Blueprint. Free instance. Build `npm ci && npm run build`, start `npx tsx worker/src/node.ts`.
-
-Free Render sleeps after 15 minutes idle — first hit can take about a minute. Disk is ephemeral; piles vanish if the instance is replaced.
+Vercel. Build `npm run build`. API is `/api`. Piles + photos: Vercel Blob.
 
 Webhook:
 
 ```
-https://api.telegram.org/bot<token>/setWebhook?url=https://<service>.onrender.com/api/telegram
+https://api.telegram.org/bot<token>/setWebhook?url=https://mitnimm.vercel.app/api/telegram
 ```
 
 ## License

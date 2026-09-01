@@ -4,9 +4,7 @@ import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import api from "./index.ts";
-import { blobPhotos, diskPhotos, restoreSqlite, saveSqlite } from "./photos.ts";
-import { openDb } from "./sqlite.ts";
-import { registerBotCommands } from "./telegram.ts";
+import { bootEnv, ensureBotCommands } from "./boot.ts";
 
 function loadDevVars() {
   const p = join(process.cwd(), ".dev.vars");
@@ -24,33 +22,8 @@ function loadDevVars() {
 
 loadDevVars();
 
-const dataDir = process.env.DATA_DIR || join(process.cwd(), "data");
-const dbPath = join(dataDir, "mitnimm.db");
-const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
-
-if (blobToken) {
-  const ok = await restoreSqlite(dbPath, blobToken);
-  console.log(ok ? "mitnimm db restored from blob" : "mitnimm db: empty blob, starting fresh");
-}
-
-const db = openDb(dbPath);
-
-async function flush() {
-  if (!blobToken || !db.isDirty()) return;
-  db.checkpoint();
-  await saveSqlite(dbPath, blobToken);
-  db.clearDirty();
-}
-
-const env = {
-  DB: db,
-  PHOTOS: blobToken ? blobPhotos(blobToken) : diskPhotos(join(dataDir, "photos")),
-  TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
-  TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID,
-  APP_URL: process.env.APP_URL || process.env.RENDER_EXTERNAL_URL,
-};
-
-void registerBotCommands(env);
+const { env, flush } = await bootEnv();
+ensureBotCommands(env);
 
 const app = new Hono();
 app.get("/api", async (c) => {
@@ -80,7 +53,7 @@ serve({
   port,
   hostname: "0.0.0.0",
 });
-console.log(`mitnimm api http://127.0.0.1:${port}${blobToken ? " (blob persist)" : " (local disk)"}`);
+console.log(`mitnimm api http://127.0.0.1:${port}${process.env.BLOB_READ_WRITE_TOKEN ? " (blob persist)" : " (local disk)"}`);
 
 for (const sig of ["SIGTERM", "SIGINT"] as const) {
   process.on(sig, () => {

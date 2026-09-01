@@ -10,7 +10,7 @@ Du fotografierst, was auf der Strasse steht. Jemand nimmt’s mit. Der Pin stirb
 
 **DE** · [EN](README.en.md) · [FR](README.fr.md) · [IT](README.it.md) · [RM](README.rm.md)
 
-[![Live](https://img.shields.io/badge/live-mitnimm.onrender.com-e85c1a?style=flat-square)](https://mitnimm.onrender.com)
+[![Live](https://img.shields.io/badge/live-mitnimm.vercel.app-e85c1a?style=flat-square)](https://mitnimm.vercel.app)
 [![Telegram](https://img.shields.io/badge/bot-@mitnimmbot-26A5E4?style=flat-square)](https://t.me/mitnimmbot)
 [![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)](LICENSE)
 
@@ -34,13 +34,13 @@ Danach bleibt die History: Strasse + Kategorie + Datum. Fotos fallen weg.
 
 ## Agent-API
 
-Kein Login. Basis: https://mitnimm.onrender.com
+Kein Login. Basis: https://mitnimm.vercel.app
 
 | | |
 |---|---|
-| Discovery | [`/api/agent`](https://mitnimm.onrender.com/api/agent) |
-| OpenAPI | [`/api/openapi.json`](https://mitnimm.onrender.com/api/openapi.json) |
-| Für Modelle | [`/llms.txt`](https://mitnimm.onrender.com/llms.txt) |
+| Discovery | [`/api/agent`](https://mitnimm.vercel.app/api/agent) |
+| OpenAPI | [`/api/openapi.json`](https://mitnimm.vercel.app/api/openapi.json) |
+| Für Modelle | [`/llms.txt`](https://mitnimm.vercel.app/llms.txt) |
 
 ```
 GET /api/categories
@@ -73,8 +73,8 @@ Produktspec: [`PRODUCT.md`](PRODUCT.md). English: [`README.en.md`](README.en.md)
 | Schicht | Technik |
 |---|---|
 | Karte | Vite + TypeScript, MapLibre, OpenFreeMap. Kein React. |
-| API | Node (Hono) + SQLite + Fotos auf Disk |
-| Host | Render, ein Free-Webservice |
+| API | Node (Hono) + SQLite, Fotos in Vercel Blob |
+| Host | Vercel (mitnimm.vercel.app) |
 | Alerts | Telegram `@mitnimmbot` |
 
 ## Lokal
@@ -95,14 +95,12 @@ APP_URL=http://localhost:5173
 
 ## Deploy
 
-`render.yaml` ist der Blueprint. Free Instance. Build `npm ci && npm run build`, Start `npx tsx worker/src/node.ts`.
-
-Free Render schläft nach 15 Minuten Idle — der erste Hit dauert oft eine Minute. Disk ist ephemer; Haufen sind weg, wenn die Instanz neu kommt.
+Vercel. Build `npm run build`. API is `/api`. Haufen + Fotos: Vercel Blob.
 
 Webhook:
 
 ```
-https://api.telegram.org/bot<token>/setWebhook?url=https://<service>.onrender.com/api/telegram
+https://api.telegram.org/bot<token>/setWebhook?url=https://mitnimm.vercel.app/api/telegram
 ```
 
 ## Lizenz
