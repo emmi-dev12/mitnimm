@@ -29,10 +29,21 @@ export async function styleFor(kind: MapKind): Promise<string | StyleSpecificati
   const liberty = (await fetch("https://tiles.openfreemap.org/styles/liberty").then((r) =>
     r.json(),
   )) as StyleSpecification;
-  liberty.sources = { ...liberty.sources, swissimage: satSource };
-  liberty.layers = [
-    { id: "swissimage", type: "raster", source: "swissimage" },
-    ...(liberty.layers ?? []).filter((l) => l.type === "symbol"),
-  ];
-  return liberty;
+  return {
+    ...liberty,
+    sources: { ...liberty.sources, swissimage: satSource },
+    layers: [
+      { id: "swissimage", type: "raster", source: "swissimage" },
+      ...(liberty.layers ?? []).map((l) => {
+        if (l.type === "symbol") return l;
+        return {
+          ...l,
+          layout: {
+            ...((l as { layout?: Record<string, unknown> }).layout ?? {}),
+            visibility: "none" as const,
+          },
+        };
+      }),
+    ],
+  };
 }

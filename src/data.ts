@@ -11,9 +11,11 @@ export type Spot = {
   items: string;
   itemsEn: string;
   photo: string;
+  street?: string;
   createdAt: number;
   hoursLeft: number;
   gone?: boolean;
+  goneAt?: number;
 };
 
 export const CH = {

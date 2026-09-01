@@ -41,6 +41,8 @@ type Row = {
   photo_key: string;
   created_at: number;
   gone: number;
+  street: string;
+  gone_at: number;
 };
 
 const TTL_MS = 72 * 3600_000;
@@ -60,6 +62,16 @@ async function migrate(db: Env["DB"]) {
       `CREATE TABLE IF NOT EXISTS prefs (chat_id TEXT PRIMARY KEY, lang TEXT NOT NULL DEFAULT 'de', km INTEGER NOT NULL DEFAULT 3)`,
     )
     .run();
+  for (const sql of [
+    "ALTER TABLE spots ADD COLUMN street TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE spots ADD COLUMN gone_at INTEGER NOT NULL DEFAULT 0",
+  ]) {
+    try {
+      await db.prepare(sql).run();
+    } catch {
+      /* column exists */
+    }
+  }
 }
 
 type Pref = { lang: Lang; km: number };
@@ -99,9 +111,9 @@ async function expire(env: Env) {
   }
   if (old.results?.length) {
     await env.DB.prepare(
-      "UPDATE spots SET gone = 1, photo_key = '' WHERE gone = 0 AND created_at < ?",
+      "UPDATE spots SET gone = 1, photo_key = '', gone_at = ? WHERE gone = 0 AND created_at < ?",
     )
-      .bind(cut)
+      .bind(Date.now(), cut)
       .run();
   }
 }
@@ -135,6 +147,22 @@ async function geocodePlz(plz: string) {
   return { lat: hit.lat, lon: hit.lon };
 }
 
+async function reverseStreet(lat: number, lon: number) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
+    const json = (await fetch(url, {
+      headers: { "user-agent": "mitnimm/0.1 (https://mitnimm.onrender.com)" },
+    }).then((r) => r.json())) as {
+      address?: { road?: string; postcode?: string; suburb?: string; village?: string; town?: string; city?: string };
+    };
+    const a = json.address || {};
+    const place = a.suburb || a.village || a.town || a.city || "";
+    return [a.road, a.postcode, place].filter(Boolean).join(", ").slice(0, 80);
+  } catch {
+    return "";
+  }
+}
+
 function jsonSpot(r: Row) {
   return {
     id: r.id,
@@ -147,9 +175,11 @@ function jsonSpot(r: Row) {
     items: r.items,
     itemsEn: r.items_en,
     photo: r.photo_key ? `/api/photos/${r.photo_key}` : "",
+    street: r.street || "",
     createdAt: r.created_at,
     hoursLeft: hoursLeft(r.created_at),
     gone: r.gone === 1,
+    goneAt: r.gone_at || 0,
   };
 }
 
@@ -160,6 +190,15 @@ app.get("/api/spots", async (c) => {
     "SELECT * FROM spots WHERE gone = 0 ORDER BY created_at DESC",
   ).all<Row>();
   return c.json((live.results ?? []).map(jsonSpot));
+});
+
+app.get("/api/history", async (c) => {
+  await migrate(c.env.DB);
+  await expire(c.env);
+  const rows = await c.env.DB.prepare(
+    "SELECT * FROM spots WHERE gone = 1 ORDER BY gone_at DESC, created_at DESC LIMIT 80",
+  ).all<Row>();
+  return c.json((rows.results ?? []).map(jsonSpot));
 });
 
 app.post("/api/spots", async (c) => {
@@ -190,6 +229,7 @@ app.post("/api/spots", async (c) => {
   await c.env.PHOTOS.put(key, await file.arrayBuffer(), {
     httpMetadata: { contentType: "image/jpeg" },
   });
+  const street = await reverseStreet(lat, lon);
   const now = Date.now();
   const row: Row = {
     id,
@@ -204,10 +244,12 @@ app.post("/api/spots", async (c) => {
     photo_key: key,
     created_at: now,
     gone: 0,
+    street,
+    gone_at: 0,
   };
   await c.env.DB.prepare(
-    `INSERT INTO spots (id,lat,lon,quote,quote_en,category,category_en,items,items_en,photo_key,created_at,gone)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,0)`,
+    `INSERT INTO spots (id,lat,lon,quote,quote_en,category,category_en,items,items_en,photo_key,created_at,gone,street,gone_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,0,?,0)`,
   )
     .bind(
       row.id,
@@ -221,6 +263,7 @@ app.post("/api/spots", async (c) => {
       row.items_en,
       row.photo_key,
       row.created_at,
+      row.street,
     )
     .run();
   const spot = jsonSpot(row);
@@ -263,11 +306,13 @@ app.post("/api/spots/:id/gone", async (c) => {
     return c.json(jsonSpot(row));
   }
   if (row.photo_key) await c.env.PHOTOS.delete(row.photo_key);
-  await c.env.DB.prepare("UPDATE spots SET gone = 1, photo_key = '' WHERE id = ?")
-    .bind(id)
+  const goneAt = Date.now();
+  await c.env.DB.prepare("UPDATE spots SET gone = 1, photo_key = '', gone_at = ? WHERE id = ?")
+    .bind(goneAt, id)
     .run();
   row.gone = 1;
   row.photo_key = "";
+  row.gone_at = goneAt;
   return c.json(jsonSpot(row));
 });
 

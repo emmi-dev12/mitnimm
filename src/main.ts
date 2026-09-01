@@ -4,7 +4,8 @@ import "./style.css";
 import { ZH, haversineM, inCH, hoursLeft, TTL_H, type Spot } from "./data";
 import { styleFor, type MapKind } from "./styles";
 import { CATS } from "./categories";
-import { loadSpots, createSpot, stillSpot, goneSpot, itemList, mediaUrl } from "./store";
+import { gpsFromJpeg } from "./exif";
+import { loadSpots, loadHistory, createSpot, stillSpot, goneSpot, itemList, mediaUrl } from "./store";
 import { detectLang, I18N, isLang, KMS, LANGS, type Lang } from "./i18n";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
@@ -21,12 +22,12 @@ app.innerHTML = `
     <div class="pref-row" id="langs" role="radiogroup" aria-label="Sprache"></div>
     <div class="pref-row" id="kms" role="radiogroup" aria-label="Umkreis"></div>
   </div>
-  <div class="kinds" role="radiogroup" aria-label="Kartentyp">
-    <button type="button" class="kind on" data-kind="map">Karte</button>
-    <button type="button" class="kind" data-kind="satellite">Satellit</button>
-    <button type="button" class="kind" data-kind="hybrid">Hybrid</button>
-  </div>
   <div class="dock">
+    <div class="kinds" role="radiogroup" aria-label="Kartentyp">
+      <button type="button" class="kind on" data-kind="map">Karte</button>
+      <button type="button" class="kind" data-kind="satellite">Satellit</button>
+      <button type="button" class="kind" data-kind="hybrid">Hybrid</button>
+    </div>
     <div class="plate" id="plate"></div>
     <div class="acts">
       <button type="button" id="still">NOCH DA</button>
@@ -53,8 +54,13 @@ app.innerHTML = `
   <div class="sheet" id="sheet">
     <video id="cam" autoplay playsinline></video>
     <p class="camhint">Nur der Haufen. Kein Haus, keine Fassade, keine Hausnummer.</p>
+    <div id="cropstage">
+      <div id="cropview"><img id="cropimg" alt="" /></div>
+      <input id="cropzoom" type="range" min="1" max="4" step="0.01" value="1" />
+    </div>
     <form class="meta" id="meta">
       <img id="preview" alt="" />
+      <button type="button" class="editpic" id="recrop">ZUSCHNEIDEN</button>
       <p class="hint">Kategorie, dann optional genauer. Foto = Haufen, nicht Haus.</p>
       <label class="nophoto-house"><input type="checkbox" id="no-house" /> Foto zeigt den Haufen, nicht das Haus.</label>
       <div class="cats" id="cats"></div>
@@ -67,8 +73,14 @@ app.innerHTML = `
     </form>
     <div class="bar" id="cambar">
       <button class="cancel" id="cancel" type="button">ABBRECHEN</button>
+      <button class="cancel" id="album" type="button">ALBUM</button>
       <button class="shoot" id="shoot" type="button">AUSLÖSEN</button>
     </div>
+    <div class="bar" id="cropbar">
+      <button class="cancel" id="crop-cancel" type="button">ABBRECHEN</button>
+      <button class="shoot" id="crop-ok" type="button">ZUSCHNEIDEN</button>
+    </div>
+    <input id="album-file" type="file" accept="image/jpeg,image/jpg" hidden />
   </div>
 `;
 
@@ -117,6 +129,16 @@ function metres(s: Spot) {
 function renderPlate(s: Spot) {
   const m = metres(s);
   const c = t();
+  if (s.gone) {
+    const day = new Date(s.goneAt || s.createdAt).toLocaleDateString();
+    document.getElementById("plate")!.innerHTML = `
+      <div class="cell"><div class="k">${c.was}</div><div class="v">${s.street || "—"}</div></div>
+      <div class="cell"><div class="k">${c.cat}</div><div class="v">${lang === "en" ? s.categoryEn : s.category}</div></div>
+      <div class="cell"><div class="k">${c.items}</div><div class="v">${lang === "en" ? s.itemsEn : s.items}</div></div>
+      <div class="cell"><div class="k">DATUM</div><div class="v">${day}</div></div>
+    `;
+    return;
+  }
   document.getElementById("plate")!.innerHTML = `
     <div class="cell"><div class="k">${c.cat}</div><div class="v">${lang === "en" ? s.categoryEn : s.category}</div></div>
     <div class="cell"><div class="k">${c.items}</div><div class="v">${lang === "en" ? s.itemsEn : s.items}</div></div>
@@ -128,12 +150,19 @@ function renderPlate(s: Spot) {
 function crateEl(s: Spot) {
   const el = document.createElement("button");
   el.type = "button";
-  el.className = "crate" + (s.id === selected?.id ? " sel" : "");
-  el.innerHTML = `
+  el.className = "crate" + (s.id === selected?.id ? " sel" : "") + (s.gone ? " hist" : "");
+  const label = lang === "en" ? s.quoteEn : s.quote;
+  el.innerHTML = s.gone
+    ? `
+    <div class="frame">
+      <div class="quote">“${label}”</div>
+    </div>
+  `
+    : `
     <span class="tie"></span>
     <div class="frame">
       <img src="${mediaUrl(s.photo)}" alt="${s.quote}" />
-      <div class="quote">“${lang === "en" ? s.quoteEn : s.quote}”</div>
+      <div class="quote">“${label}”</div>
       <div class="hazard"></div>
     </div>
   `;
@@ -144,15 +173,20 @@ function crateEl(s: Spot) {
   return el;
 }
 
+function histSpots() {
+  return allSpots.filter((s) => s.gone && metres(s) <= km * 1000);
+}
+
 function mountMarkers() {
-  const live = new Set(liveSpots().map((s) => s.id));
+  const shown = [...liveSpots(), ...histSpots()];
+  const keep = new Set(shown.map((s) => s.id));
   for (const [id, m] of markers) {
-    if (!live.has(id)) {
+    if (!keep.has(id)) {
       m.remove();
       markers.delete(id);
     }
   }
-  for (const s of liveSpots()) {
+  for (const s of shown) {
     markers.get(s.id)?.remove();
     const m = new maplibregl.Marker({ element: crateEl(s), anchor: "bottom" })
       .setLngLat([s.lon, s.lat])
@@ -186,9 +220,6 @@ async function markGone(s: Spot, remaining?: string[]) {
     const i = allSpots.findIndex((x) => x.id === s.id);
     if (i >= 0) allSpots[i] = next;
     if (next.gone) {
-      allSpots = allSpots.filter((x) => x.id !== s.id);
-      markers.get(s.id)?.remove();
-      markers.delete(s.id);
       selectLive();
       return;
     }
@@ -240,9 +271,17 @@ const you = new maplibregl.Marker({ element: youEl, anchor: "center" })
   .setLngLat([here.lon, here.lat])
   .addTo(map);
 
+function padMap() {
+  const dock = document.querySelector(".dock") as HTMLElement | null;
+  const h = dock?.offsetHeight ?? 210;
+  map.setPadding({ top: 88, bottom: h + 10, left: 8, right: 8 });
+}
+
 map.on("load", async () => {
+  padMap();
   try {
-    allSpots = await loadSpots();
+    const [live, hist] = await Promise.all([loadSpots(), loadHistory().catch(() => [] as Spot[])]);
+    allSpots = [...live, ...hist];
   } catch {
     alert(t().apiDown);
   }
@@ -291,13 +330,24 @@ const sheet = document.getElementById("sheet")!;
 const video = document.getElementById("cam") as HTMLVideoElement;
 const meta = document.getElementById("meta") as HTMLFormElement;
 const cambar = document.getElementById("cambar")!;
+const cropstage = document.getElementById("cropstage")!;
+const cropbar = document.getElementById("cropbar")!;
+const cropview = document.getElementById("cropview")!;
+const cropimg = document.getElementById("cropimg") as HTMLImageElement;
+const cropzoom = document.getElementById("cropzoom") as HTMLInputElement;
 const preview = document.getElementById("preview") as HTMLImageElement;
+const albumFile = document.getElementById("album-file") as HTMLInputElement;
 const catsEl = document.getElementById("cats")!;
 const subsEl = document.getElementById("subs")!;
 let stream: MediaStream | null = null;
 let photo: string | null = null;
+let cropSrc = "";
+let cropScale = 1;
+let cropX = 0;
+let cropY = 0;
 let catId: string | null = null;
 let subId: string | null = null;
+let havePin = false;
 
 function stopCam() {
   stream?.getTracks().forEach((t) => t.stop());
@@ -305,14 +355,23 @@ function stopCam() {
   video.srcObject = null;
 }
 
+function hideCrop() {
+  cropstage.classList.remove("show");
+  cropbar.classList.remove("show");
+}
+
 function closeSheet() {
   stopCam();
   photo = null;
+  cropSrc = "";
   catId = null;
   subId = null;
+  havePin = false;
+  albumFile.value = "";
   const house = document.getElementById("no-house") as HTMLInputElement | null;
   if (house) house.checked = false;
   meta.classList.remove("show");
+  hideCrop();
   video.style.display = "";
   cambar.style.display = "";
   sheet.classList.remove("open");
@@ -335,6 +394,58 @@ function gps(): Promise<{ lat: number; lon: number }> {
       { enableHighAccuracy: true, timeout: 12000 },
     );
   });
+}
+
+function layoutCrop() {
+  const box = cropview.clientWidth || 320;
+  const nw = cropimg.naturalWidth || 1;
+  const nh = cropimg.naturalHeight || 1;
+  const base = Math.max(box / nw, box / nh);
+  const w = nw * base * cropScale;
+  const h = nh * base * cropScale;
+  const minX = Math.min(0, box - w);
+  const minY = Math.min(0, box - h);
+  cropX = Math.min(0, Math.max(minX, cropX));
+  cropY = Math.min(0, Math.max(minY, cropY));
+  cropimg.style.width = `${w}px`;
+  cropimg.style.height = `${h}px`;
+  cropimg.style.transform = `translate(${cropX}px, ${cropY}px)`;
+}
+
+function openCrop(src: string) {
+  cropSrc = src;
+  cropScale = 1;
+  cropX = 0;
+  cropY = 0;
+  cropzoom.value = "1";
+  cropimg.onload = () => layoutCrop();
+  cropimg.src = src;
+  stopCam();
+  video.style.display = "none";
+  cambar.style.display = "none";
+  meta.classList.remove("show");
+  cropstage.classList.add("show");
+  cropbar.classList.add("show");
+}
+
+function commitCrop() {
+  const box = cropview.clientWidth || 320;
+  const nw = cropimg.naturalWidth || 1;
+  const nh = cropimg.naturalHeight || 1;
+  const base = Math.max(box / nw, box / nh);
+  const scale = base * cropScale;
+  const sx = -cropX / scale;
+  const sy = -cropY / scale;
+  const ss = box / scale;
+  const c = document.createElement("canvas");
+  c.width = 720;
+  c.height = 720;
+  c.getContext("2d")!.drawImage(cropimg, sx, sy, ss, ss, 0, 0, 720, 720);
+  photo = c.toDataURL("image/jpeg", 0.72);
+  preview.src = photo;
+  hideCrop();
+  meta.classList.add("show");
+  paintCats();
 }
 
 function paintCats() {
@@ -370,51 +481,108 @@ subsEl.addEventListener("click", (e) => {
   paintCats();
 });
 
-document.getElementById("posten")!.addEventListener("click", async () => {
+async function openPoster() {
+  sheet.classList.add("open");
+  video.style.display = "";
+  cambar.style.display = "";
+  hideCrop();
+  meta.classList.remove("show");
   try {
     const pos = await gps();
     here = pos;
+    havePin = true;
     you.setLngLat([pos.lon, pos.lat]);
+  } catch {
+    /* album can still post via EXIF */
+  }
+  try {
     stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: { ideal: "environment" } },
       audio: false,
     });
     video.srcObject = stream;
-    sheet.classList.add("open");
-  } catch (err) {
-    const e = err as Error;
-    if (e.message === "ch") alert(t().onlyCh);
-    else if (e.message === "gps") alert(t().needGps);
-    else alert(t().needCam);
+  } catch {
+    video.style.display = "none";
   }
+}
+
+document.getElementById("posten")!.addEventListener("click", () => {
+  void openPoster();
 });
 
 document.getElementById("cancel")!.addEventListener("click", closeSheet);
 document.getElementById("abort")!.addEventListener("click", closeSheet);
 
 document.getElementById("shoot")!.addEventListener("click", () => {
+  if (!stream) {
+    albumFile.click();
+    return;
+  }
+  if (!havePin) {
+    alert(t().needGps);
+    return;
+  }
   const c = document.createElement("canvas");
   const w = video.videoWidth || 720;
   const h = video.videoHeight || 720;
-  const side = Math.min(w, h);
-  c.width = 720;
-  c.height = 720;
-  const x = (w - side) / 2;
-  const y = (h - side) / 2;
-  c.getContext("2d")!.drawImage(video, x, y, side, side, 0, 0, 720, 720);
-  photo = c.toDataURL("image/jpeg", 0.72);
-  preview.src = photo;
-  stopCam();
-  video.style.display = "none";
-  cambar.style.display = "none";
-  meta.classList.add("show");
-  paintCats();
+  c.width = w;
+  c.height = h;
+  c.getContext("2d")!.drawImage(video, 0, 0);
+  openCrop(c.toDataURL("image/jpeg", 0.92));
+});
+
+document.getElementById("album")!.addEventListener("click", () => albumFile.click());
+document.getElementById("recrop")!.addEventListener("click", () => {
+  if (cropSrc) openCrop(cropSrc);
+});
+document.getElementById("crop-ok")!.addEventListener("click", commitCrop);
+document.getElementById("crop-cancel")!.addEventListener("click", closeSheet);
+
+albumFile.addEventListener("change", async () => {
+  const file = albumFile.files?.[0];
+  if (!file) return;
+  const buf = await file.arrayBuffer();
+  const gpsFix = gpsFromJpeg(buf);
+  if (!gpsFix || !inCH(gpsFix.lat, gpsFix.lon)) {
+    alert(t().needExif);
+    albumFile.value = "";
+    return;
+  }
+  here = gpsFix;
+  havePin = true;
+  you.setLngLat([gpsFix.lon, gpsFix.lat]);
+  map.easeTo({ center: [gpsFix.lon, gpsFix.lat], zoom: 16, duration: 280 });
+  const url = URL.createObjectURL(file);
+  openCrop(url);
+});
+
+cropzoom.addEventListener("input", () => {
+  cropScale = Number(cropzoom.value);
+  layoutCrop();
+});
+let drag: { x: number; y: number; cx: number; cy: number } | null = null;
+cropview.addEventListener("pointerdown", (e) => {
+  drag = { x: e.clientX, y: e.clientY, cx: cropX, cy: cropY };
+  cropview.setPointerCapture(e.pointerId);
+});
+cropview.addEventListener("pointermove", (e) => {
+  if (!drag) return;
+  cropX = drag.cx + (e.clientX - drag.x);
+  cropY = drag.cy + (e.clientY - drag.y);
+  layoutCrop();
+});
+cropview.addEventListener("pointerup", () => {
+  drag = null;
 });
 
 meta.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!photo || !catId) {
     alert(t().needMeta);
+    return;
+  }
+  if (!havePin) {
+    alert(t().needGps);
     return;
   }
   const noHouse = (document.getElementById("no-house") as HTMLInputElement).checked;
@@ -459,6 +627,10 @@ document.querySelector(".kinds")!.addEventListener("click", async (e) => {
   for (const b of document.querySelectorAll<HTMLButtonElement>(".kind")) {
     b.classList.toggle("on", b.dataset.kind === kind);
   }
+  map.once("style.load", () => {
+    you.addTo(map);
+    mountMarkers();
+  });
   map.setStyle(await styleFor(kind));
 });
 
@@ -526,6 +698,10 @@ function applyChrome() {
   (document.getElementById("note") as HTMLInputElement).placeholder = c.note;
   document.getElementById("pin")!.textContent = c.pin;
   document.getElementById("shoot")!.textContent = c.shoot;
+  document.getElementById("album")!.textContent = c.album;
+  document.getElementById("crop-ok")!.textContent = c.crop;
+  document.getElementById("recrop")!.textContent = c.crop;
+  document.getElementById("crop-cancel")!.textContent = c.cancel;
   document.getElementById("abort")!.textContent = c.cancel;
   document.getElementById("cancel")!.textContent = c.cancel;
   document.getElementById("plz-go")!.setAttribute("aria-label", c.search);
@@ -593,3 +769,10 @@ document.getElementById("install-go")!.addEventListener("click", async () => {
   deferredInstall = null;
   document.getElementById("install")!.hidden = true;
 });
+
+const bumpMap = () => {
+  map.resize();
+  padMap();
+};
+window.addEventListener("resize", bumpMap);
+window.visualViewport?.addEventListener("resize", bumpMap);

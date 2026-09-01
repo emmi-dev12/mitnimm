@@ -30,6 +30,10 @@ export function loadSpots() {
   return api<Spot[]>("/api/spots");
 }
 
+export function loadHistory() {
+  return api<Spot[]>("/api/history");
+}
+
 export function createSpot(fields: Record<string, string>, photo: Blob) {
   const form = new FormData();
   for (const [k, v] of Object.entries(fields)) form.set(k, v);
