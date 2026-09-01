@@ -115,12 +115,43 @@ button, input { -webkit-tap-highlight-color: transparent; }
 
 .prefs {
   position: absolute;
-  top: max(62px, calc(env(safe-area-inset-top) + 52px));
+  top: max(96px, calc(env(safe-area-inset-top) + 86px));
   right: 12px;
   z-index: 3;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+.catbar {
+  position: absolute;
+  top: max(52px, calc(env(safe-area-inset-top) + 42px));
+  left: 8px;
+  right: 8px;
+  z-index: 4;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 0 4px;
+}
+.catbar::-webkit-scrollbar { display: none; }
+.catchip {
+  flex: 0 0 auto;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 2px solid #2f2e2c;
+  background: #f4f2ec;
+  color: #222;
+  padding: 7px 10px;
+  box-shadow: 2px 2px 0 #1c1c1a;
+}
+.catchip.on {
+  background: var(--ink);
+  color: #f4f2ec;
 }
 .pref-row {
   display: flex;

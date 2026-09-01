@@ -22,6 +22,7 @@ app.innerHTML = `
     <div class="pref-row" id="langs" role="radiogroup" aria-label="Sprache"></div>
     <div class="pref-row" id="kms" role="radiogroup" aria-label="Umkreis"></div>
   </div>
+  <div class="catbar" id="catbar" role="listbox" aria-label="Kategorie"></div>
   <div class="dock">
     <div class="kinds" role="radiogroup" aria-label="Kartentyp">
       <button type="button" class="kind on" data-kind="map">Karte</button>
@@ -112,6 +113,7 @@ function readKm(): number {
 
 let lang = readLang();
 let km = readKm();
+let catFilter = localStorage.getItem("mitnimm.cat") || "";
 const t = () => I18N[lang];
 const iosHome = /iphone|ipad|ipod/i.test(navigator.userAgent);
 const standalone =
@@ -174,7 +176,7 @@ function crateEl(s: Spot) {
 }
 
 function histSpots() {
-  return allSpots.filter((s) => s.gone && metres(s) <= km * 1000);
+  return allSpots.filter((s) => s.gone && metres(s) <= km * 1000 && spotMatchesCat(s));
 }
 
 function mountMarkers() {
@@ -195,9 +197,18 @@ function mountMarkers() {
   }
 }
 
+function spotMatchesCat(s: Spot) {
+  if (!catFilter) return true;
+  const cat = CATS.find((c) => c.id === catFilter);
+  if (!cat) return true;
+  const keys = [cat.de, cat.en, cat.fr, cat.it, ...(cat.subs ?? []).flatMap((x) => [x.de, x.en, x.fr, x.it])];
+  const blob = `${s.category} ${s.categoryEn} ${s.quote} ${s.quoteEn} ${s.items} ${s.itemsEn}`.toLowerCase();
+  return keys.some((k) => blob.includes(k.toLowerCase()));
+}
+
 function liveSpots() {
   return allSpots.filter(
-    (s) => !s.gone && hoursLeft(s) > 0 && metres(s) <= km * 1000,
+    (s) => !s.gone && hoursLeft(s) > 0 && metres(s) <= km * 1000 && spotMatchesCat(s),
   );
 }
 
@@ -679,6 +690,26 @@ function paintPrefs() {
   ).join("");
 }
 
+function paintCatbar() {
+  const bar = document.getElementById("catbar")!;
+  const chips = [{ id: "", label: t().allCats }, ...CATS.map((c) => ({ id: c.id, label: catLabel(c) }))];
+  bar.innerHTML = chips
+    .map(
+      (c) =>
+        `<button type="button" class="catchip${c.id === catFilter ? " on" : ""}" data-cat="${c.id}">${c.label}</button>`,
+    )
+    .join("");
+}
+
+document.getElementById("catbar")!.addEventListener("click", (e) => {
+  const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-cat]");
+  if (!b) return;
+  catFilter = b.dataset.cat || "";
+  localStorage.setItem("mitnimm.cat", catFilter);
+  paintCatbar();
+  selectLive(selected);
+});
+
 function applyChrome() {
   const c = t();
   document.documentElement.lang = lang;
@@ -713,6 +744,7 @@ function applyChrome() {
   document.getElementById("install-skip")!.textContent = c.installSkip;
   document.getElementById("install-go")!.hidden = iosHome;
   paintPrefs();
+  paintCatbar();
   paintCats();
   if (selected && liveSpots().some((x) => x.id === selected!.id)) renderPlate(selected);
   else selectLive();

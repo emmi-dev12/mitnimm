@@ -1,0 +1,17 @@
+# mitnimm — agent API
+
+Switzerland-only map of free sidewalk piles. No auth.
+
+Base: https://mitnimm.onrender.com
+
+- GET /api/agent — discovery card
+- GET /api/openapi.json — OpenAPI 3.1
+- GET /api/categories
+- GET /api/spots?category=moebel&q=
+- GET /api/nearby?plz=8004&km=3&category=
+- GET /api/history?category=
+
+POST /api/spots is for humans on site (GPS + photo). Do not automate posts.
+
+Website: https://mitnimm.onrender.com
+Telegram: https://t.me/mitnimmbot

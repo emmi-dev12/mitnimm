@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { appUrl, notifyNew, tg } from "./telegram";
 import { detectLang, isLang, KMS, TG, type Lang } from "./copy";
+import { agentCard, openapi } from "./agent";
+import { CATS } from "../../src/categories";
 
 type Stmt = {
   bind: (...args: unknown[]) => Stmt;
@@ -183,13 +185,60 @@ function jsonSpot(r: Row) {
   };
 }
 
+function hay(s: { quote: string; quoteEn: string; category: string; categoryEn: string; items: string; itemsEn: string; street?: string }) {
+  return [s.quote, s.quoteEn, s.category, s.categoryEn, s.items, s.itemsEn, s.street || ""]
+    .join(" ")
+    .toLowerCase();
+}
+
+function catKeys(raw: string) {
+  const q = raw.trim().toLowerCase();
+  if (!q) return [];
+  const cat = CATS.find(
+    (c) =>
+      c.id === q ||
+      c.de.toLowerCase() === q ||
+      c.en.toLowerCase() === q ||
+      c.fr.toLowerCase() === q ||
+      c.it.toLowerCase() === q,
+  );
+  if (!cat) return [q];
+  return [cat.id, cat.de, cat.en, cat.fr, cat.it, ...(cat.subs ?? []).flatMap((s) => [s.id, s.de, s.en, s.fr, s.it])].map(
+    (x) => x.toLowerCase(),
+  );
+}
+
+function matchSpot(
+  s: ReturnType<typeof jsonSpot>,
+  category: string,
+  q: string,
+) {
+  const blob = hay(s);
+  if (category) {
+    const keys = catKeys(category);
+    if (!keys.some((k) => blob.includes(k))) return false;
+  }
+  if (q && !blob.includes(q.trim().toLowerCase())) return false;
+  return true;
+}
+
+app.get("/api/agent", (c) => c.json(agentCard));
+app.get("/api/openapi.json", (c) => c.json(openapi));
+app.get("/api/categories", (c) =>
+  c.json(CATS.map((x) => ({ id: x.id, de: x.de, en: x.en, fr: x.fr, it: x.it }))),
+);
+
 app.get("/api/spots", async (c) => {
   await migrate(c.env.DB);
   await expire(c.env);
+  const category = String(c.req.query("category") || "");
+  const q = String(c.req.query("q") || "");
   const live = await c.env.DB.prepare(
     "SELECT * FROM spots WHERE gone = 0 ORDER BY created_at DESC",
   ).all<Row>();
-  return c.json((live.results ?? []).map(jsonSpot));
+  return c.json(
+    (live.results ?? []).map(jsonSpot).filter((s) => matchSpot(s, category, q)),
+  );
 });
 
 app.get("/api/history", async (c) => {
@@ -198,7 +247,9 @@ app.get("/api/history", async (c) => {
   const rows = await c.env.DB.prepare(
     "SELECT * FROM spots WHERE gone = 1 ORDER BY gone_at DESC, created_at DESC LIMIT 80",
   ).all<Row>();
-  return c.json((rows.results ?? []).map(jsonSpot));
+  const category = String(c.req.query("category") || "");
+  const q = String(c.req.query("q") || "");
+  return c.json((rows.results ?? []).map(jsonSpot).filter((s) => matchSpot(s, category, q)));
 });
 
 app.post("/api/spots", async (c) => {
@@ -337,12 +388,14 @@ app.get("/api/nearby", async (c) => {
   const origin = await geocodePlz(plz);
   if (!origin) return c.json({ error: "plz" }, 404);
   const km = Math.min(15, Math.max(1, Number(c.req.query("km") || 3)));
+  const category = String(c.req.query("category") || "");
+  const q = String(c.req.query("q") || "");
   const live = await c.env.DB.prepare(
     "SELECT * FROM spots WHERE gone = 0 ORDER BY created_at DESC",
   ).all<Row>();
   const hits = (live.results ?? [])
     .map((r) => ({ ...jsonSpot(r), metres: Math.round(metres(origin, r)) }))
-    .filter((s) => s.metres <= km * 1000)
+    .filter((s) => s.metres <= km * 1000 && matchSpot(s, category, q))
     .sort((a, b) => a.metres - b.metres)
     .slice(0, 12);
   return c.json({ plz, ...origin, km, spots: hits });
