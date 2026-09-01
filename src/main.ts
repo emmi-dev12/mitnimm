@@ -16,13 +16,13 @@ app.innerHTML = `
   </div>
   <form class="search-plate" id="plz-form">
     <input id="plz" inputmode="numeric" maxlength="4" placeholder="PLZ" aria-label="PLZ" />
+    <select id="cat-filter" aria-label="Kategorie"></select>
     <button type="submit" id="plz-go" aria-label="Suchen">⌕</button>
   </form>
   <div class="prefs">
     <div class="pref-row" id="langs" role="radiogroup" aria-label="Sprache"></div>
     <div class="pref-row" id="kms" role="radiogroup" aria-label="Umkreis"></div>
   </div>
-  <div class="catbar" id="catbar" role="listbox" aria-label="Kategorie"></div>
   <div class="dock">
     <div class="kinds" role="radiogroup" aria-label="Kartentyp">
       <button type="button" class="kind on" data-kind="map">Karte</button>
@@ -691,22 +691,15 @@ function paintPrefs() {
 }
 
 function paintCatbar() {
-  const bar = document.getElementById("catbar")!;
+  const sel = document.getElementById("cat-filter") as HTMLSelectElement;
   const chips = [{ id: "", label: t().allCats }, ...CATS.map((c) => ({ id: c.id, label: catLabel(c) }))];
-  bar.innerHTML = chips
-    .map(
-      (c) =>
-        `<button type="button" class="catchip${c.id === catFilter ? " on" : ""}" data-cat="${c.id}">${c.label}</button>`,
-    )
-    .join("");
+  sel.innerHTML = chips.map((c) => `<option value="${c.id}">${c.label}</option>`).join("");
+  sel.value = catFilter;
 }
 
-document.getElementById("catbar")!.addEventListener("click", (e) => {
-  const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-cat]");
-  if (!b) return;
-  catFilter = b.dataset.cat || "";
+document.getElementById("cat-filter")!.addEventListener("change", (e) => {
+  catFilter = (e.target as HTMLSelectElement).value;
   localStorage.setItem("mitnimm.cat", catFilter);
-  paintCatbar();
   selectLive(selected);
 });
 
@@ -736,6 +729,7 @@ function applyChrome() {
   document.getElementById("abort")!.textContent = c.cancel;
   document.getElementById("cancel")!.textContent = c.cancel;
   document.getElementById("plz-go")!.setAttribute("aria-label", c.search);
+  document.getElementById("cat-filter")!.setAttribute("aria-label", c.cat);
   document.querySelector(".kinds")!.setAttribute("aria-label", c.mapType);
   document.getElementById("langs")!.setAttribute("aria-label", c.langAria);
   document.getElementById("kms")!.setAttribute("aria-label", c.kmAria);

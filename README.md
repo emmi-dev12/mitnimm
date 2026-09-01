@@ -24,19 +24,43 @@ Piles show as **photos sitting on the coordinates**, dressed like crate labels. 
 
 ## How it works
 
-1. **Find** — map or a 4-digit PLZ. Tap a photo, walk over.
-2. **Post** — you are at the pile. GPS + **live camera only**. Category, optional note, done.
+1. **Find** — map, 4-digit PLZ, or the **category dropdown** (ALLE / Möbel / …). Tap a photo, walk over.
+2. **Post** — at the pile: GPS + live camera, or album JPEG **with GPS in the file**. Crop the pile (no house). Category, optional note.
 3. **Gone** — mark items or the whole pile. **Still there** resets the 72h clock.
 
-After it’s gone, history keeps street + categories + dates. Photos drop.
+After it’s gone, history keeps street + category + date. Photos drop.
+
+## Agent API
+
+No auth. Base: https://mitnimm.onrender.com
+
+| | |
+|---|---|
+| Discovery | [`/api/agent`](https://mitnimm.onrender.com/api/agent) |
+| OpenAPI | [`/api/openapi.json`](https://mitnimm.onrender.com/api/openapi.json) |
+| For models | [`/llms.txt`](https://mitnimm.onrender.com/llms.txt) |
+
+```
+GET /api/categories
+GET /api/spots?category=moebel&q=
+GET /api/nearby?plz=8004&km=3&category=velo
+GET /api/history?category=
+```
+
+`category` is an id (`moebel`) or a DE/EN/FR/IT label. `q` is free text on quote, items, street.
+
+**POST /api/spots** is for humans on site (GPS + photo). Do not automate posts.
+
+Telegram: `/start`, `/lang`, `/km`, or a PLZ.
 
 ## Hard rules
 
 - Switzerland bounding box. No accounts.
-- Live camera, on site. Camera roll is rejected.
-- Pile only — no house, no façade, no house number.
+- Live camera on site, or album JPEG with GPS metadata (anti-bot). Camera roll without GPS is rejected.
+- Pile only — no house, no façade, no house number. Crop before pin.
 - OpenStreetMap / OpenFreeMap attribution stays on. geo.admin.ch is PLZ search only.
-- Telegram bot is public: `/start`, then a PLZ.
+- Telegram bot is public: `/start`, `/lang`, `/km`, then a PLZ.
+- Agents may **read** the JSON API. They may not auto-post piles.
 
 Product spec: [`PRODUCT.md`](PRODUCT.md).
 

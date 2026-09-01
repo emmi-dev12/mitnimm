@@ -41,7 +41,7 @@ Mechanism neighbors cannot copy without becoming this:
 
 ## Operating Context
 
-Swiss sidewalk giveaway culture. Phone in hand, outdoors, often one-handed, variable signal. PWA: camera + geolocation + installable. OpenStreetMap for map/geocoding (not osm.org public tiles for production traffic). Telegram: public channel of new piles; send a PLZ to a bot, get nearby links. GitHub (emmi-dev12), FOSS, $0 infra (Vercel + another free backend/blob). Languages v1: English + German.
+Swiss sidewalk giveaway culture. Phone in hand, outdoors, often one-handed, variable signal. PWA: camera + geolocation + installable. OpenStreetMap for map/geocoding (not osm.org public tiles for production traffic). Telegram: public bot (`/start`, PLZ, `/lang`, `/km`). GitHub (emmi-dev12), FOSS, $0 infra (Render web service). Languages v1: DE + EN + FR + IT. Agents consume the public JSON API; they do not post.
 
 ## Capabilities and Constraints
 
@@ -49,8 +49,9 @@ Confirmed v1:
 
 - PWA, CH only, EN + DE + FR + IT.
 - No accounts; browse open; post without login.
-- Create: on-site GPS (~50–100m) + live camera; 1 photo required.
+- Create: on-site GPS (~50–100m) + live camera **or** album JPEG with GPS in EXIF; 1 photo required; crop so the pile is the frame.
 - After photo: top-level category + optional subcategory + optional short description (low friction). Categories as rich as Ricardo/Tutti goods (not services/jobs/real estate).
+- **Find:** PLZ search + **category dropdown** (ALLE or one goods category).
 - Map unit: spot + inventory inside.
 - Remote “gone” allowed; partial checkoff of inventory items.
 - “Still there” resets 48–72h expiry.
@@ -58,7 +59,8 @@ Confirmed v1:
 - Do not auto-merge nearby duplicate pins.
 - No in-app comments; structured actions only.
 - No report/moderation queue in v1.
-- Telegram v1: channel posts; bot replies to PLZ with nearby links.
+- Telegram v1: bot `/start` `/lang` `/km` + PLZ nearby links. Optional channel via `TELEGRAM_CHAT_ID`.
+- **Agent API (read-only):** `/api/agent`, `/api/openapi.json`, `/llms.txt`, `/api/spots`, `/api/nearby`, `/api/history`, `/api/categories`. No auth. POST is humans only.
 - Hosting: no spend. github.io rejected (cannot store uploads).
 - Photo: crop/redact before upload so the façade can be removed.
 
@@ -73,9 +75,9 @@ Undecided / not v1:
 
 Name: **mitnimm**.
 
-Visual lock (user, 2026-08-28): category-standard *job* (GPS-centered map, PLZ search, post) with **listing photos sitting on the coordinates**, dressed in **zip-tie stockroom** grammar (quoted industrial labels, orange zip-tie = live, 45° hazard on selected, nylon/stencil plates). Not teardrop pins. Not Apple/Google/Airbnb chrome. Seed key `db274811`; style from challenger `textiles-weave-drape-fashion-industrial-quote-grammar`.
+Visual lock (user, 2026-08-28): category-standard *job* (GPS-centered map, PLZ + **category dropdown**, post) with **listing photos sitting on the coordinates**, dressed in **zip-tie stockroom** grammar (quoted industrial labels, orange zip-tie = live, 45° hazard on selected, nylon/stencil plates). Not teardrop pins. Not Apple/Google/Airbnb chrome. Seed key `db274811`; style from challenger `textiles-weave-drape-fashion-industrial-quote-grammar`.
 
-Voice: short, human, bilingual EN/DE. Not marketplace copy.
+Voice: short, human, DE/EN/FR/IT. Not marketplace copy.
 
 ## Evidence on Hand
 
@@ -83,7 +85,7 @@ No screenshots of real piles in-repo yet, no testimonials, no usage data. Do not
 
 ## Product Principles
 
-1. **Presence is trust.** If you weren’t there with a live photo, it doesn’t go on the map.
+1. **Presence is trust.** Live camera + GPS, or an album JPEG that already has GPS in the file. No GPS, no pin. Agents do not post.
 2. **Findable without doxxing.** Close enough to walk to the pile; never a house number or a façade as the listing.
 3. **Street speed.** Posting is photo → category → optional note. Finding is map → pin → go.
 4. **Rot is the default.** Piles die in days; the product assumes gone, not forever.
@@ -91,4 +93,4 @@ No screenshots of real piles in-repo yet, no testimonials, no usage data. Do not
 
 ## Accessibility & Inclusion
 
-Phone outdoors, one-handed, possibly gloves/sun/rain. EN+DE. No product-specific WCAG target locked yet; PWA must remain usable with large type and one thumb.
+Phone outdoors, one-handed, possibly gloves/sun/rain. DE+EN+FR+IT. Category filter is a native dropdown (not a chip strip) so it fits iPhone 12. PWA must remain usable with large type and one thumb.
