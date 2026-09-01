@@ -51,6 +51,7 @@ const TTL_MS = 72 * 3600_000;
 const CH = { minLat: 45.8, maxLat: 47.9, minLon: 5.9, maxLon: 10.6 };
 
 const app = new Hono<{ Bindings: Env }>();
+app.use("/api", cors({ origin: "*" }));
 app.use("/api/*", cors({ origin: "*" }));
 
 async function migrate(db: Env["DB"]) {
@@ -223,6 +224,7 @@ function matchSpot(
   return true;
 }
 
+app.get("/api", (c) => c.json(agentCard));
 app.get("/api/agent", (c) => c.json(agentCard));
 app.get("/api/openapi.json", (c) => c.json(openapi));
 app.get("/api/categories", (c) =>
@@ -385,9 +387,13 @@ app.get("/api/nearby", async (c) => {
   await migrate(c.env.DB);
   await expire(c.env);
   const plz = String(c.req.query("plz") || "");
-  if (!/^\d{4}$/.test(plz)) return c.json({ error: "plz" }, 400);
+  if (!/^\d{4}$/.test(plz)) {
+    return c.json({ error: "plz", message: "Need a 4-digit Swiss PLZ, e.g. ?plz=8004" }, 400);
+  }
   const origin = await geocodePlz(plz);
-  if (!origin) return c.json({ error: "plz" }, 404);
+  if (!origin) {
+    return c.json({ error: "plz", message: "Unknown PLZ" }, 404);
+  }
   const km = Math.min(15, Math.max(1, Number(c.req.query("km") || 3)));
   const category = String(c.req.query("category") || "");
   const q = String(c.req.query("q") || "");

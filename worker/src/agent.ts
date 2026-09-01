@@ -2,73 +2,37 @@ const BASE = "https://mitnimm.onrender.com";
 
 export const agentCard = {
   name: "mitnimm",
-  description:
-    "Switzerland-only map of free sidewalk piles (gratis zum Mitnehmen). Read-only for agents. No auth.",
-  website: BASE,
-  openapi: `${BASE}/api/openapi.json`,
+  description: "Free sidewalk piles in Switzerland. Read-only. No auth.",
+  base: BASE,
   auth: "none",
-  license: "MIT",
-  geo: "CH",
+  start: `${BASE}/api/nearby?plz=8004`,
   endpoints: {
-    spots: "GET /api/spots?category=&q=",
-    nearby: "GET /api/nearby?plz=8004&km=3&category=&q=",
-    history: "GET /api/history?category=&q=",
+    nearby: "GET /api/nearby?plz=8004&km=3&category=velo",
+    spots: "GET /api/spots?category=moebel",
+    history: "GET /api/history",
     categories: "GET /api/categories",
   },
-  notes: [
-    "category matches id, DE/EN/FR/IT labels, or substring on items.",
-    "q is free-text over quote, items, street, category.",
-    "POST /api/spots is for on-site humans (GPS + photo), not unattended bots.",
-    "Piles expire ~72h. gone piles stay in /api/history without photos.",
-  ],
+  write: "POST /api/spots is humans on site only (GPS + photo). Do not automate.",
 };
 
 export const openapi = {
   openapi: "3.1.0",
-  info: {
-    title: "mitnimm",
-    version: "0.1.0",
-    description: agentCard.description,
-  },
+  info: { title: "mitnimm", version: "0.1.0", description: agentCard.description },
   servers: [{ url: BASE }],
   paths: {
-    "/api/spots": {
-      get: {
-        summary: "Live piles",
-        parameters: [
-          { name: "category", in: "query", schema: { type: "string" } },
-          { name: "q", in: "query", schema: { type: "string" } },
-        ],
-        responses: { "200": { description: "Array of live spots" } },
-      },
-    },
+    "/api": { get: { summary: "This card", responses: { "200": { description: "Discovery" } } } },
     "/api/nearby": {
       get: {
         summary: "Piles near a Swiss PLZ",
         parameters: [
-          { name: "plz", in: "query", required: true, schema: { type: "string", pattern: "^\\d{4}$" } },
+          { name: "plz", in: "query", required: true, schema: { type: "string", example: "8004" } },
           { name: "km", in: "query", schema: { type: "number", default: 3 } },
-          { name: "category", in: "query", schema: { type: "string" } },
-          { name: "q", in: "query", schema: { type: "string" } },
+          { name: "category", in: "query", schema: { type: "string", example: "velo" } },
         ],
-        responses: { "200": { description: "plz, lat, lon, km, spots[]" } },
       },
     },
-    "/api/history": {
-      get: {
-        summary: "Gone piles (street + category + date, no photos)",
-        parameters: [
-          { name: "category", in: "query", schema: { type: "string" } },
-          { name: "q", in: "query", schema: { type: "string" } },
-        ],
-        responses: { "200": { description: "Array of gone spots" } },
-      },
-    },
-    "/api/categories": {
-      get: {
-        summary: "Category list",
-        responses: { "200": { description: "id + labels" } },
-      },
-    },
+    "/api/spots": { get: { summary: "All live piles" } },
+    "/api/history": { get: { summary: "Gone piles, no photos" } },
+    "/api/categories": { get: { summary: "Category ids and labels" } },
   },
 };

@@ -16,11 +16,11 @@ app.innerHTML = `
   </div>
   <form class="search-plate" id="plz-form">
     <input id="plz" inputmode="numeric" maxlength="4" placeholder="PLZ" aria-label="PLZ" />
-    <select id="cat-filter" aria-label="Kategorie"></select>
     <button type="submit" id="plz-go" aria-label="Suchen">⌕</button>
   </form>
   <div class="prefs">
     <select id="lang-pick" class="lang-pick" aria-label="Sprache"></select>
+    <select id="cat-filter" class="cat-pick" aria-label="Kategorie"></select>
     <div class="pref-row" id="kms" role="radiogroup" aria-label="Umkreis"></div>
   </div>
   <div class="dock">

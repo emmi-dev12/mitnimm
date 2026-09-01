@@ -36,6 +36,7 @@ const env = {
 void registerBotCommands(env);
 
 const app = new Hono();
+app.get("/api", (c) => api.fetch(c.req.raw, env));
 app.all("/api/*", (c) => api.fetch(c.req.raw, env));
 
 if (existsSync(join(process.cwd(), "dist", "index.html"))) {
