@@ -64,6 +64,7 @@ Telegram: `/start`, `/lang`, `/km`, oder eine PLZ.
 - Telegram-Bot ist öffentlich: `/start`, `/lang`, `/km`, dann PLZ.
 - Agenten dürfen die JSON-API **lesen**. Sie dürfen keine Haufen auto-posten.
 - Offline: nach einem Online-Besuch bleiben die zuletzt geladenen Kacheln + die letzte Haufenliste. **GEBIET** lädt die aktuelle Kartenansicht (max. ~700 Kacheln). GPS-Punkt folgt dir auch ohne Netz.
+- Speicher: Haufen + Fotos liegen in **Vercel Blob** (nicht auf der Render-Disk). Bleiben nach Sleep/Redeploy.
 
 Produktspec: [`PRODUCT.md`](PRODUCT.md). English: [`README.en.md`](README.en.md).
 

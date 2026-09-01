@@ -64,6 +64,7 @@ Telegram: `/start`, `/lang`, `/km`, or a PLZ.
 - Telegram bot is public: `/start`, `/lang`, `/km`, then a PLZ.
 - Agents may **read** the JSON API. They may not auto-post piles.
 - Offline: after one online visit, last viewed map tiles + last pile list stay. Satellite only where you already opened it.
+- Storage: piles + photos live in **Vercel Blob** (not Render’s disk). They survive sleep/redeploy.
 
 Product spec: [`PRODUCT.md`](PRODUCT.md). German (default): [`README.md`](README.md).
 

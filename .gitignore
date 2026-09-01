@@ -10,3 +10,4 @@ data
 .vercel
 .hermes
 .impeccable/questions/
+.env*

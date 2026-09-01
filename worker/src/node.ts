@@ -4,7 +4,7 @@ import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import api from "./index.ts";
-import { diskPhotos } from "./photos.ts";
+import { blobPhotos, diskPhotos, restoreSqlite, saveSqlite } from "./photos.ts";
 import { openDb } from "./sqlite.ts";
 import { registerBotCommands } from "./telegram.ts";
 
@@ -25,9 +25,26 @@ function loadDevVars() {
 loadDevVars();
 
 const dataDir = process.env.DATA_DIR || join(process.cwd(), "data");
+const dbPath = join(dataDir, "mitnimm.db");
+const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
+
+if (blobToken) {
+  const ok = await restoreSqlite(dbPath, blobToken);
+  console.log(ok ? "mitnimm db restored from blob" : "mitnimm db: empty blob, starting fresh");
+}
+
+const db = openDb(dbPath);
+
+async function flush() {
+  if (!blobToken || !db.isDirty()) return;
+  db.checkpoint();
+  await saveSqlite(dbPath, blobToken);
+  db.clearDirty();
+}
+
 const env = {
-  DB: openDb(join(dataDir, "mitnimm.db")),
-  PHOTOS: diskPhotos(join(dataDir, "photos")),
+  DB: db,
+  PHOTOS: blobToken ? blobPhotos(blobToken) : diskPhotos(join(dataDir, "photos")),
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
   TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID,
   APP_URL: process.env.APP_URL || process.env.RENDER_EXTERNAL_URL,
@@ -36,8 +53,16 @@ const env = {
 void registerBotCommands(env);
 
 const app = new Hono();
-app.get("/api", (c) => api.fetch(c.req.raw, env));
-app.all("/api/*", (c) => api.fetch(c.req.raw, env));
+app.get("/api", async (c) => {
+  const res = await api.fetch(c.req.raw, env);
+  await flush();
+  return res;
+});
+app.all("/api/*", async (c) => {
+  const res = await api.fetch(c.req.raw, env);
+  await flush();
+  return res;
+});
 
 if (existsSync(join(process.cwd(), "dist", "index.html"))) {
   app.get("/sw.js", async (c, next) => {
@@ -55,4 +80,10 @@ serve({
   port,
   hostname: "0.0.0.0",
 });
-console.log(`mitnimm api http://127.0.0.1:${port}`);
+console.log(`mitnimm api http://127.0.0.1:${port}${blobToken ? " (blob persist)" : " (local disk)"}`);
+
+for (const sig of ["SIGTERM", "SIGINT"] as const) {
+  process.on(sig, () => {
+    void flush().finally(() => process.exit(0));
+  });
+}

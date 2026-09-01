@@ -15,3 +15,5 @@ services:
         sync: false
       - key: TELEGRAM_CHAT_ID
         sync: false
+      - key: BLOB_READ_WRITE_TOKEN
+        sync: false
