@@ -7,6 +7,7 @@ import { CATS } from "./categories";
 import { gpsFromJpeg } from "./exif";
 import { loadSpots, loadHistory, createSpot, stillSpot, goneSpot, itemList, mediaUrl } from "./store";
 import { detectLang, I18N, isLang, KMS, LANGS, type Lang } from "./i18n";
+import { downloadArea } from "./offline";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
@@ -24,6 +25,7 @@ app.innerHTML = `
     <div class="pref-row" id="kms" role="radiogroup" aria-label="Umkreis"></div>
   </div>
   <div class="dock">
+    <button type="button" id="dl-area" class="dl-area">GEBIET</button>
     <div class="kinds" role="radiogroup" aria-label="Kartentyp">
       <button type="button" class="kind on" data-kind="map">Karte</button>
       <button type="button" class="kind" data-kind="satellite">Satellit</button>
@@ -303,21 +305,46 @@ map.on("load", async () => {
   const jlon = Number(jump.get("lon"));
   if (inCH(jlat, jlon)) {
     map.easeTo({ center: [jlon, jlat], zoom: 16, duration: 400 });
-  } else if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
+  }
+  let firstFix = !inCH(jlat, jlon);
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(
       (p) => {
         const lat = p.coords.latitude;
         const lon = p.coords.longitude;
         if (!inCH(lat, lon)) return;
         here = { lat, lon };
         you.setLngLat([lon, lat]);
-        map.easeTo({ center: [lon, lat], zoom: 16, duration: 600 });
-        if (selected) renderPlate(selected);
+        if (firstFix) {
+          firstFix = false;
+          map.easeTo({ center: [lon, lat], zoom: 16, duration: 600 });
+        }
+        if (selected && !selected.gone) renderPlate(selected);
       },
       () => {},
-      { enableHighAccuracy: true, timeout: 8000 },
+      { enableHighAccuracy: true, maximumAge: 2000, timeout: 20000 },
     );
   }
+});
+
+document.getElementById("dl-area")!.addEventListener("click", async () => {
+  const btn = document.getElementById("dl-area") as HTMLButtonElement;
+  if (btn.disabled) return;
+  const b = map.getBounds();
+  btn.disabled = true;
+  try {
+    await downloadArea(
+      { west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth() },
+      (done, total) => {
+        btn.textContent = `${done}/${total}`;
+      },
+    );
+    btn.textContent = t().dlDone;
+  } catch (err) {
+    btn.textContent = t().dl;
+    alert((err as Error).message === "big" ? t().dlBig : t().dlFail);
+  }
+  btn.disabled = false;
 });
 
 document.getElementById("plz-form")!.addEventListener("submit", async (e) => {
@@ -711,6 +738,7 @@ function applyChrome() {
   document.getElementById("still")!.textContent = c.still;
   document.getElementById("weg")!.textContent = c.gone;
   document.getElementById("posten")!.textContent = c.posten;
+  document.getElementById("dl-area")!.textContent = c.dl;
   document.querySelector(".gonebox .hint")!.textContent = c.goneHint;
   document.getElementById("gone-cancel")!.textContent = c.cancel;
   document.getElementById("gone-all")!.textContent = c.goneAll;

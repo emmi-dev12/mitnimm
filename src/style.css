@@ -162,6 +162,24 @@ button, input { -webkit-tap-highlight-color: transparent; }
   color: #f4f2ec;
 }
 
+.dl-area {
+  display: block;
+  width: 100%;
+  margin-bottom: 6px;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 2px solid #2f2e2c;
+  background: #f4f2ec;
+  color: #222;
+  box-shadow: 2px 3px 0 #1c1c1a;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+.dl-area:disabled { opacity: 0.7; }
+
 .kinds {
   display: flex;
   flex-direction: row;
