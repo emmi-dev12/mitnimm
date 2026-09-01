@@ -8,7 +8,8 @@
     "dev:web": "vite",
     "dev:api": "tsx watch worker/src/node.ts",
     "dev:cf": "wrangler dev --port 8787",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && npm run build:api",
+    "build:api": "esbuild worker/src/vercel-handler.ts --bundle --platform=node --format=cjs --outfile=api/index.js",
     "start": "tsx worker/src/node.ts",
     "preview": "vite preview"
   },
@@ -20,9 +21,11 @@
     "@vercel/blob": "^2.8.0",
     "hono": "^4.9.6",
     "maplibre-gl": "^5.6.1",
+    "sql.js": "^1.14.2",
     "tsx": "^4.20.0"
   },
   "devDependencies": {
+    "@types/node": "^26.4.0",
     "concurrently": "^9.2.1",
     "typescript": "^5.9.2",
     "vite": "^7.1.3",

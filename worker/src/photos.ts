@@ -10,7 +10,7 @@ export type Photos = {
   ) => Promise<unknown>;
   get: (
     key: string,
-  ) => Promise<{ body: BodyInit; httpMetadata?: { contentType?: string } } | null>;
+  ) => Promise<{ body: Buffer; httpMetadata?: { contentType?: string } } | null>;
   delete: (key: string) => Promise<unknown>;
 };
 

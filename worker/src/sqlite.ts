@@ -1,6 +1,6 @@
-import { DatabaseSync } from "node:sqlite";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import initSqlJs from "sql.js";
 
 type Stmt = {
   bind: (...args: unknown[]) => Stmt;
@@ -16,10 +16,14 @@ export type MitnimmDb = {
   clearDirty: () => void;
 };
 
-export function openDb(path: string): MitnimmDb {
+export async function openDb(path: string): Promise<MitnimmDb> {
   mkdirSync(dirname(path), { recursive: true });
-  const db = new DatabaseSync(path);
-  db.exec("PRAGMA journal_mode = WAL;");
+  const wasm = await fetch("https://cdn.jsdelivr.net/npm/sql.js@1.14.2/dist/sql-wasm.wasm").then((r) => {
+    if (!r.ok) throw new Error("sql wasm " + r.status);
+    return r.arrayBuffer();
+  });
+  const SQL = await initSqlJs({ wasmBinary: new Uint8Array(wasm) });
+  const db = existsSync(path) ? new SQL.Database(readFileSync(path)) : new SQL.Database();
   let dirty = false;
 
   function mark(sql: string) {
@@ -29,10 +33,23 @@ export function openDb(path: string): MitnimmDb {
   function stmt(sql: string, params: unknown[] = []): Stmt {
     const run = () => {
       mark(sql);
-      return db.prepare(sql).run(...(params as never[]));
+      db.run(sql, params as never);
     };
-    const all = <T>() => ({ results: db.prepare(sql).all(...(params as never[])) as T[] });
-    const first = <T>() => ((db.prepare(sql).get(...(params as never[])) as T | undefined) ?? null);
+    const all = <T>() => {
+      const s = db.prepare(sql);
+      s.bind(params as never);
+      const results: T[] = [];
+      while (s.step()) results.push(s.getAsObject() as T);
+      s.free();
+      return { results };
+    };
+    const first = <T>() => {
+      const s = db.prepare(sql);
+      s.bind(params as never);
+      const row = s.step() ? (s.getAsObject() as T) : null;
+      s.free();
+      return row;
+    };
     return {
       bind: (...args: unknown[]) => stmt(sql, args),
       run,
@@ -44,7 +61,7 @@ export function openDb(path: string): MitnimmDb {
   return {
     prepare: (sql: string) => stmt(sql),
     checkpoint: () => {
-      db.exec("PRAGMA wal_checkpoint(TRUNCATE);");
+      writeFileSync(path, Buffer.from(db.export()));
     },
     isDirty: () => dirty,
     clearDirty: () => {

@@ -22,7 +22,7 @@ type Env = {
     ) => Promise<unknown>;
     get: (
       key: string,
-    ) => Promise<{ body: BodyInit; httpMetadata?: { contentType?: string } } | null>;
+    ) => Promise<{ body: Buffer; httpMetadata?: { contentType?: string } } | null>;
     delete: (key: string) => Promise<unknown>;
   };
   TELEGRAM_BOT_TOKEN?: string;
@@ -344,7 +344,7 @@ app.post("/api/spots/:id/still", async (c) => {
 app.post("/api/spots/:id/gone", async (c) => {
   await migrate(c.env.DB);
   const id = c.req.param("id");
-  const body = await c.req.json<{ remaining?: string[] }>().catch(() => ({}));
+  const body = (await c.req.json().catch(() => ({}))) as { remaining?: string[] };
   const row = await c.env.DB.prepare("SELECT * FROM spots WHERE id = ?")
     .bind(id)
     .first<Row>();

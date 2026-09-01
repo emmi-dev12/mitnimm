@@ -3,8 +3,8 @@ import { join } from "node:path";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
-import api from "./index.ts";
-import { bootEnv, ensureBotCommands } from "./boot.ts";
+import api from "./index";
+import { bootEnv, ensureBotCommands } from "./boot";
 
 function loadDevVars() {
   const p = join(process.cwd(), ".dev.vars");

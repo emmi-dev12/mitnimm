@@ -22,7 +22,7 @@ export async function bootEnv(): Promise<{ env: AppEnv; flush: () => Promise<voi
     await restoreSqlite(dbPath, blobToken);
   }
 
-  const db = openDb(dbPath);
+  const db = await openDb(dbPath);
 
   async function flush() {
     if (!blobToken || !db.isDirty()) return;

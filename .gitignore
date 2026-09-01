@@ -11,3 +11,4 @@ data
 .hermes
 .impeccable/questions/
 .env*
+api/index.js

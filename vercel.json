@@ -1,11 +1,8 @@
 {
   "framework": "vite",
-  "nodeVersion": "22.x",
   "functions": {
-    "api/index.ts": {
-      "runtime": "nodejs22.x",
-      "maxDuration": 30,
-      "includeFiles": "worker/src/**"
+    "api/index.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
