@@ -1,6 +1,6 @@
-const SHELL = "mitnimm-shell-v8";
-const TILES = "mitnimm-tiles-v8";
-const DATA = "mitnimm-data-v8";
+const SHELL = "mitnimm-shell-v9";
+const TILES = "mitnimm-tiles-v9";
+const DATA = "mitnimm-data-v9";
 
 const PRECACHE = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 

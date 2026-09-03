@@ -24,8 +24,8 @@ app.innerHTML = `
     <select id="cat-filter" class="cat-pick" aria-label="Kategorie"></select>
     <div class="pref-row" id="kms" role="radiogroup" aria-label="Umkreis"></div>
   </div>
-  <div class="dock">
-    <button type="button" id="dl-area" class="dl-area">GEBIET</button>
+  <button type="button" id="dl-area" class="dl-area">GEBIET</button>
+  <div class="dock idle">
     <div class="kinds" role="radiogroup" aria-label="Kartentyp">
       <button type="button" class="kind on" data-kind="map">Karte</button>
       <button type="button" class="kind" data-kind="satellite">Satellit</button>
@@ -214,13 +214,23 @@ function liveSpots() {
   );
 }
 
+function setDock(s: Spot | null) {
+  const dock = document.querySelector(".dock")!;
+  dock.classList.toggle("idle", !s);
+  dock.classList.toggle("hist", !!s?.gone);
+  if (s) renderPlate(s);
+  else {
+    document.getElementById("plate")!.innerHTML = "";
+  }
+  padMap();
+}
+
 function selectLive(s?: Spot | null) {
   const live = liveSpots();
   const next = s && live.some((x) => x.id === s.id) ? s : live[0];
   if (!next) {
     selected = null;
-    document.getElementById("plate")!.innerHTML =
-      `<div class="cell"><div class="k">MAP</div><div class="v">${t().empty}</div></div>`;
+    setDock(null);
     mountMarkers();
     return;
   }
@@ -248,7 +258,7 @@ async function stillThere(s: Spot) {
     const i = allSpots.findIndex((x) => x.id === s.id);
     if (i >= 0) allSpots[i] = next;
     selected = next;
-    renderPlate(next);
+    setDock(next);
   } catch {
     alert(t().apiDown);
   }
@@ -274,7 +284,7 @@ function openGone(s: Spot) {
 function select(s: Spot) {
   selected = s;
   mountMarkers();
-  renderPlate(s);
+  setDock(s);
   map.easeTo({ center: [s.lon, s.lat], offset: [0, -40], duration: 280 });
 }
 
@@ -413,6 +423,7 @@ function closeSheet() {
   video.style.display = "";
   cambar.style.display = "";
   sheet.classList.remove("open");
+  app.classList.remove("shooting");
 }
 
 function gps(): Promise<{ lat: number; lon: number }> {
@@ -521,6 +532,7 @@ subsEl.addEventListener("click", (e) => {
 
 async function openPoster() {
   sheet.classList.add("open");
+  app.classList.add("shooting");
   video.style.display = "";
   cambar.style.display = "";
   hideCrop();
